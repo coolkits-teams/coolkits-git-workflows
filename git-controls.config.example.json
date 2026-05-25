@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/coolkits/git-workflows/main/schema.json",
+
+  "rootBranch": "root",
+  "devBranch": "dev",
+  "remote": "origin",
+
+  "featurePath": ["src/features"],
+
+  "commonBranchPrefix": "common",
+
+  "protectedBranches": ["root", "dev", "main", "master", "develop"],
+
+  "mergeRequestProvider": "gitlab",
+
+  "syncStrategy": "merge"
+}

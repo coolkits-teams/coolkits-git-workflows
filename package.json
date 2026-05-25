@@ -1,0 +1,90 @@
+{
+  "name": "@coolkits/git-workflows",
+  "version": "1.0.0",
+  "description": "Zero-dependency CLI toolkit for the feature-based branch workflow: extract shared code changes into a dedicated branch, open a merge request, and sync the feature branch back from the integration branch.",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "bin": {
+    "git-extract-common": "./dist/bin/extract-common.js",
+    "git-sync-from-root": "./dist/bin/sync-from-root.js"
+  },
+  "files": [
+    "dist/",
+    "git-controls.config.example.json",
+    "README.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "build:watch": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint src bin",
+    "lint:fix": "eslint src bin --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "npm run type-check && npm run lint && npm run format:check && npm run build",
+    "prepublishOnly": "npm run verify",
+    "extract-common": "node dist/bin/extract-common.js",
+    "sync-from-root": "node dist/bin/sync-from-root.js"
+  },
+  "keywords": [
+    "git",
+    "git-workflow",
+    "feature-branch",
+    "feature-based",
+    "branching-strategy",
+    "monorepo",
+    "automation",
+    "cli",
+    "gitlab",
+    "github",
+    "merge-request",
+    "pull-request",
+    "common-code",
+    "shared-code",
+    "extract",
+    "sync"
+  ],
+  "author": {
+    "name": "David Ngo",
+    "email": "ngohung2395@gmail.com",
+    "url": "https://github.com/davidngo239"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/coolkits/git-workflows.git"
+  },
+  "bugs": {
+    "url": "https://github.com/coolkits/git-workflows/issues"
+  },
+  "homepage": "https://github.com/coolkits/git-workflows#readme",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@eslint/js": "^9.27.0",
+    "@types/node": "^22.15.21",
+    "eslint": "^9.27.0",
+    "eslint-config-prettier": "^10.1.5",
+    "globals": "^16.2.0",
+    "prettier": "^3.5.3",
+    "tsup": "^8.5.0",
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.32.1"
+  }
+}
