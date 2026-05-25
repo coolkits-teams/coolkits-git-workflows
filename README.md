@@ -5,8 +5,6 @@
 [![Node.js](https://img.shields.io/node/v/@coolkits%2Fgit-workflows)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 
-**Repository:** [coolkits-teams/coolkits-git-workflows](https://github.com/coolkits-teams/coolkits-git-workflows/tree/master)
-
 Zero-dependency CLI toolkit for the **feature-based branch workflow**.
 
 ## Installation
