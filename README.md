@@ -7,6 +7,27 @@
 
 Zero-dependency CLI toolkit for the **feature-based branch workflow**.
 
+## Installation
+
+### Per-project dev dependency (recommended)
+
+```bash
+npm install --save-dev @coolkits/git-workflows
+# or
+yarn add --dev @coolkits/git-workflows
+```
+
+Then add shortcuts to your `package.json`:
+
+```json
+{
+  "scripts": {
+    "git:extract-common": "git-extract-common",
+    "git:sync-from-root": "git-sync-from-root"
+  }
+}
+```
+
 It automates two operations that are otherwise tedious and error-prone:
 
 | Command              | What it does                                                                      |
@@ -57,27 +78,6 @@ feature/product
 - **`root`** holds the canonical common codebase. Feature branches must be synced with `root` before extracting.
 - **`dev`** is where the team integrates features for dev environment builds. This CLI does **not** open MRs into `dev` — you do that manually when the feature is ready.
 - **`main`** is not part of this workflow unless you configure it separately.
-
-## Installation
-
-### Per-project dev dependency (recommended)
-
-```bash
-npm install --save-dev @coolkits/git-workflows
-# or
-yarn add --dev @coolkits/git-workflows
-```
-
-Then add shortcuts to your `package.json`:
-
-```json
-{
-  "scripts": {
-    "git:extract-common": "git-extract-common",
-    "git:sync-from-root": "git-sync-from-root"
-  }
-}
-```
 
 ### Global (run from any repository)
 
