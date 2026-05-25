@@ -62,12 +62,12 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/coolkits/git-workflows.git"
+    "url": "https://github.com/coolkits-teams/coolkits-git-workflows.git"
   },
   "bugs": {
-    "url": "https://github.com/coolkits/git-workflows/issues"
+    "url": "https://github.com/coolkits-teams/coolkits-git-workflows/issues"
   },
-  "homepage": "https://github.com/coolkits/git-workflows#readme",
+  "homepage": "https://github.com/coolkits-teams/coolkits-git-workflows#readme",
   "engines": {
     "node": ">=18.0.0"
   },

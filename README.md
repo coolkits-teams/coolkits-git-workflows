@@ -1,9 +1,11 @@
 # @coolkits/git-workflows
 
-[![npm version](https://img.shields.io/npm/v/@coolkits/git-workflows)](https://www.npmjs.com/package/@coolkits/git-workflows)
-[![npm downloads](https://img.shields.io/npm/dm/@coolkits/git-workflows)](https://www.npmjs.com/package/@coolkits/git-workflows)
-[![Node.js](https://img.shields.io/node/v/@coolkits/git-workflows)](https://nodejs.org)
+[![npm version](https://img.shields.io/npm/v/@coolkits%2Fgit-workflows)](https://www.npmjs.com/package/@coolkits/git-workflows)
+[![npm downloads](https://img.shields.io/npm/dm/@coolkits%2Fgit-workflows)](https://www.npmjs.com/package/@coolkits/git-workflows)
+[![Node.js](https://img.shields.io/node/v/@coolkits%2Fgit-workflows)](https://nodejs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+
+**Repository:** [coolkits-teams/coolkits-git-workflows](https://github.com/coolkits-teams/coolkits-git-workflows/tree/master)
 
 Zero-dependency CLI toolkit for the **feature-based branch workflow**.
 
@@ -526,4 +528,4 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-[MIT](./LICENSE) loved © David Ngo
+[MIT](./LICENSE) © [David Ngo](https://github.com/davidngo239)

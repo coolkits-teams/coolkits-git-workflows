@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/coolkits/git-workflows/main/schema.json",
+  "$schema": "https://raw.githubusercontent.com/coolkits-teams/coolkits-git-workflows/master/git-controls.config.example.json",
 
   "rootBranch": "root",
   "devBranch": "dev",

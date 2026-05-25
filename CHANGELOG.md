@@ -32,4 +32,4 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 - Conflict detection with actionable resolution guidance.
 - Zero runtime dependencies.
 
-[1.0.0]: https://github.com/coolkits/git-workflows/releases/tag/v1.0.0
+[1.0.0]: https://github.com/coolkits-teams/coolkits-git-workflows/releases/tag/v1.0.0

@@ -11,7 +11,7 @@ project works and how to get involved.
 
 - All merge requests must be reviewed and approved by the owner ([@davidngo239](https://github.com/davidngo239)) before merging.
 - Only the owner publishes releases to the npm registry. Do not attempt to run `npm publish` on behalf of the project.
-- The `main` branch is protected. Direct pushes are not accepted.
+- The `master` branch is protected. Direct pushes are not accepted.
 
 ---
 
@@ -31,10 +31,10 @@ This avoids wasted effort if the change does not align with the project's direct
 
 ```bash
 # Fork the repository on GitHub, then:
-git clone https://github.com/<your-username>/git-workflows.git
-cd git-workflows
+git clone https://github.com/<your-username>/coolkits-git-workflows.git
+cd coolkits-git-workflows
 
-# Create a branch off main
+# Create a branch off master
 git checkout -b fix/describe-the-fix
 # or
 git checkout -b feat/describe-the-feature
@@ -82,7 +82,7 @@ refactor: extract buildPathspec into its own function
 
 ### 5. Open a pull request
 
-- Target branch: `main`.
+- Target branch: `master`.
 - Fill in the PR description — what changed and why.
 - Reference the related issue: `Closes #42`.
 - The owner will review and may request changes before merging.
@@ -102,8 +102,8 @@ refactor: extract buildPathspec into its own function
 ## Local setup
 
 ```bash
-git clone https://github.com/coolkits/git-workflows.git
-cd git-workflows
+git clone https://github.com/coolkits-teams/coolkits-git-workflows.git
+cd coolkits-git-workflows
 
 # No install step needed — zero dependencies.
 
@@ -119,5 +119,5 @@ npm run verify
 
 ## Questions?
 
-Open a [GitHub issue](https://github.com/coolkits/git-workflows/issues) or start a
-[Discussion](https://github.com/coolkits/git-workflows/discussions).
+Open a [GitHub issue](https://github.com/coolkits-teams/coolkits-git-workflows/issues) or start a
+[Discussion](https://github.com/coolkits-teams/coolkits-git-workflows/discussions).
