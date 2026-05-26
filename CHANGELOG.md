@@ -7,6 +7,17 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [1.1.2] — 2026-05-26
+
+### Fixed
+
+- `git-sync-from-root`: handle `null` stdout/stderr when git commands use
+  `stdio: 'inherit'` (merge/push) — fixes crash after a successful merge.
+
+[1.1.2]: https://github.com/coolkits-teams/coolkits-git-workflows/releases/tag/v1.1.2
+
+---
+
 ## [1.1.1] — 2026-05-26
 
 ### Fixed

@@ -1,6 +1,6 @@
 {
   "name": "@coolkits/git-workflows",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Zero-dependency CLI toolkit for the feature-based branch workflow: extract shared code changes into a dedicated branch, open a merge request, and sync the feature branch back from the integration branch.",
   "type": "module",
   "main": "./dist/index.js",

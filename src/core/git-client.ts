@@ -18,7 +18,7 @@ export function createGitClient({ cwd }: { cwd?: string } = {}): GitClient {
       ok: result.status === 0,
       status: result.status,
       stdout: result.stdout || '',
-      stderr: result.stderr.trim(),
+      stderr: result.stderr || '',
     };
   };
 
