@@ -72,8 +72,8 @@ coolkit create-mr --target dev
 
     // ── Tags ──
     "tag-create": "coolkit tag-create", // Create annotated tag and push to origin
-    "tag-delete": "coolkit tag-delete" // Delete tag local + remote at once
-  }
+    "tag-delete": "coolkit tag-delete", // Delete tag local + remote at once
+  },
 }
 ```
 
