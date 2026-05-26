@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-search-commits — Find commits by message text or code changes.
  *

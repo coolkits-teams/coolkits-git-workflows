@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-abort — Abort a stuck merge, rebase, cherry-pick, revert, or bisect.
  * Detects the current state automatically.

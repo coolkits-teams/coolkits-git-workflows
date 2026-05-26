@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-recover-branch — Recover a recently deleted branch using the reflog.
  *

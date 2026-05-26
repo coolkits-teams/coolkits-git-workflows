@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-amend — Fix the last commit: change message, add forgotten files, or remove files.
  *

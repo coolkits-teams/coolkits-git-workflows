@@ -16,6 +16,7 @@ export default defineConfig([
   // CLI entry points — standalone bundles, no types needed
   {
     entry: {
+      'bin/coolkit': 'bin/coolkit.ts',
       // ── Architecture workflows ──────────────────────────────────────────
       'bin/extract-common': 'bin/extract-common.ts',
       'bin/sync-from-root': 'bin/sync-from-root.ts',

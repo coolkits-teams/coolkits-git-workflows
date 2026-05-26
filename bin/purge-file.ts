@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-purge-file — Permanently remove a file from the entire git history.
  * Use when you accidentally committed secrets, credentials, or large binaries.

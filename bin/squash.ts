@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-squash — Combine the last N commits into one clean commit.
  *

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-pull-rebase — Pull from remote using rebase instead of merge.
  * Keeps a linear history with no extra merge commits.

@@ -12,28 +12,7 @@
     }
   },
   "bin": {
-    "git-extract-common": "./dist/bin/extract-common.js",
-    "git-sync-from-root": "./dist/bin/sync-from-root.js",
-    "git-create-mr": "./dist/bin/create-mr.js",
-    "git-start-branch": "./dist/bin/start-branch.js",
-    "git-finish-branch": "./dist/bin/finish-branch.js",
-    "git-undo": "./dist/bin/undo.js",
-    "git-revert-commit": "./dist/bin/revert-commit.js",
-    "git-amend": "./dist/bin/amend.js",
-    "git-squash": "./dist/bin/squash.js",
-    "git-move-commits": "./dist/bin/move-commits.js",
-    "git-cherry-pick": "./dist/bin/cherry-pick.js",
-    "git-delete-branch": "./dist/bin/delete-branch.js",
-    "git-recover-branch": "./dist/bin/recover-branch.js",
-    "git-prune-branches": "./dist/bin/prune-branches.js",
-    "git-abort": "./dist/bin/abort.js",
-    "git-resolve": "./dist/bin/resolve.js",
-    "git-pull-rebase": "./dist/bin/pull-rebase.js",
-    "git-purge-file": "./dist/bin/purge-file.js",
-    "git-search-commits": "./dist/bin/search-commits.js",
-    "git-bisect": "./dist/bin/bisect.js",
-    "git-tag-create": "./dist/bin/tag-create.js",
-    "git-tag-delete": "./dist/bin/tag-delete.js"
+    "coolkit": "./dist/bin/coolkit.js"
   },
   "files": [
     "dist/",
@@ -54,8 +33,8 @@
     "verify": "npm run type-check && npm run lint && npm run format:check && npm run test && npm run build",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "prepublishOnly": "npm run verify",
-    "extract-common": "node dist/bin/extract-common.js",
-    "sync-from-root": "node dist/bin/sync-from-root.js"
+    "extract-common": "node dist/bin/coolkit.js extract-common",
+    "sync-from-root": "node dist/bin/coolkit.js sync-from-root"
   },
   "keywords": [
     "git",

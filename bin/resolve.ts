@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-resolve — Resolve all merge conflicts by taking one side completely.
  *

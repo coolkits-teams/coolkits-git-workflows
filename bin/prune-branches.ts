@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-prune-branches — Clean up local branches whose remote counterpart is gone.
  *

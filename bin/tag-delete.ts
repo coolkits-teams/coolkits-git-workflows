@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-tag-delete — Delete a tag both locally and on the remote.
  *

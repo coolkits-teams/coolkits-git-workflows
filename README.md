@@ -9,9 +9,81 @@
 [![Repository](https://img.shields.io/badge/GitHub-coolkits--teams-blue?logo=github)](https://github.com/coolkits-teams/coolkits-git-workflows)
 
 **Git workflow automation CLI for modern development teams.**  
-One command for every painful git situation — from daily flow automation to emergency rescues.
+One command for every painful git situation - from daily flow automation to emergency rescues.
 
 </div>
+
+---
+
+## 📦 Installation
+
+```bash
+npm install --save-dev @coolkits/git-workflows
+# or
+yarn add -D @coolkits/git-workflows
+# or
+pnpm add -D @coolkits/git-workflows
+```
+
+After install, the `coolkit` command is available globally in your project:
+
+```bash
+coolkit --help
+coolkit undo --count 2
+coolkit create-mr --target dev
+```
+
+### Optional: add shortcuts to `package.json`
+
+```jsonc
+{
+  "scripts": {
+    // ── Architecture workflows ──
+    "extract-common": "coolkit extract-common", // Extract shared code → common branch → MR to root
+    "sync-from-root": "coolkit sync-from-root", // Sync root changes into current feature branch
+    "create-mr": "coolkit create-mr", // Create MR/PR between any two branches
+    "start-branch": "coolkit start-branch", // Create feature / release / hotfix branch
+    "finish-branch": "coolkit finish-branch", // Push branch and open MR(s) per architecture
+
+    // ── Undo & fix commits ──
+    "undo": "coolkit undo", // Undo unpushed commits (keeps changes staged)
+    "revert-commit": "coolkit revert-commit", // Safely revert a pushed commit (no rewrite)
+    "amend": "coolkit amend", // Fix last commit: message, add/remove files
+    "squash": "coolkit squash", // Squash last N commits into one
+
+    // ── Move & copy commits ──
+    "move-commits": "coolkit move-commits", // Move commits to the correct branch
+    "cherry-pick": "coolkit cherry-pick", // Cherry-pick one commit or a range
+
+    // ── Branch management ──
+    "delete-branch": "coolkit delete-branch", // Delete branch local + remote at once
+    "recover-branch": "coolkit recover-branch", // Recover accidentally deleted branch (reflog)
+    "prune-branches": "coolkit prune-branches", // Remove stale local branches (remote gone)
+
+    // ── Conflict & sync ──
+    "abort": "coolkit abort", // Abort stuck merge / rebase / cherry-pick
+    "resolve": "coolkit resolve", // Resolve conflicts: accept all theirs or ours
+    "pull-rebase": "coolkit pull-rebase", // Pull with rebase instead of merge
+
+    // ── History & investigation ──
+    "purge-file": "coolkit purge-file", // Remove sensitive file from entire git history
+    "search-commits": "coolkit search-commits", // Find commits by message or code content
+    "bisect": "coolkit bisect", // Binary search for bug-introducing commit
+
+    // ── Tags ──
+    "tag-create": "coolkit tag-create", // Create annotated tag and push to origin
+    "tag-delete": "coolkit tag-delete" // Delete tag local + remote at once
+  }
+}
+```
+
+Then run `yarn extract-common` or `npm run extract-common`.
+
+### Config (optional)
+
+```bash
+cp node_modules/@coolkits/git-workflows/git-controls.config.example.json git-controls.config.json
+```
 
 ---
 
@@ -21,81 +93,8 @@ One command for every painful git situation — from daily flow automation to em
 
 | Layer                         | Purpose                                                                                                                       |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 🏗️ **Architecture workflows** | Automate branch strategies — `feature-based`, `gitflow`, `github-flow`, `gitlab-flow`, `trunk-based`, `monorepo`              |
+| 🏗️ **Architecture workflows** | Automate branch strategies - `feature-based`, `gitflow`, `github-flow`, `gitlab-flow`, `trunk-based`, `monorepo`              |
 | 🛠️ **Git utilities**          | One-liner commands for everyday pain points: undo, squash, amend, cherry-pick, branch recovery, conflict resolution, and more |
-
----
-
-## 📦 Installation
-
-### Option A — Vendored (recommended for teams with supply-chain concerns)
-
-```bash
-# In your project (no npm publish needed)
-node packages/git-workflows/dist/bin/<command>.js
-# or via yarn scripts (see setup below)
-```
-
-### Option B — npm
-
-```bash
-npm install --save-dev @coolkits/git-workflows
-# or
-yarn add -D @coolkits/git-workflows
-```
-
----
-
-## 🚀 Quick Setup (Vendored)
-
-**3 steps — takes under 2 minutes.**
-
-**Step 1.** Copy the `dist/` folder into your project:
-
-```
-your-project/
-└── packages/
-    └── git-workflows/
-        └── dist/          ← copy here from git-controls/dist/
-```
-
-**Step 2.** Add scripts to your `package.json`:
-
-```json
-{
-  "scripts": {
-    "git:extract-common": "node packages/git-workflows/dist/bin/extract-common.js",
-    "git:sync-from-root": "node packages/git-workflows/dist/bin/sync-from-root.js",
-    "git:create-mr": "node packages/git-workflows/dist/bin/create-mr.js",
-    "git:start-branch": "node packages/git-workflows/dist/bin/start-branch.js",
-    "git:finish-branch": "node packages/git-workflows/dist/bin/finish-branch.js",
-    "git:undo": "node packages/git-workflows/dist/bin/undo.js",
-    "git:amend": "node packages/git-workflows/dist/bin/amend.js",
-    "git:squash": "node packages/git-workflows/dist/bin/squash.js",
-    "git:revert-commit": "node packages/git-workflows/dist/bin/revert-commit.js",
-    "git:move-commits": "node packages/git-workflows/dist/bin/move-commits.js",
-    "git:cherry-pick": "node packages/git-workflows/dist/bin/cherry-pick.js",
-    "git:delete-branch": "node packages/git-workflows/dist/bin/delete-branch.js",
-    "git:recover-branch": "node packages/git-workflows/dist/bin/recover-branch.js",
-    "git:prune-branches": "node packages/git-workflows/dist/bin/prune-branches.js",
-    "git:abort": "node packages/git-workflows/dist/bin/abort.js",
-    "git:resolve": "node packages/git-workflows/dist/bin/resolve.js",
-    "git:pull-rebase": "node packages/git-workflows/dist/bin/pull-rebase.js",
-    "git:purge-file": "node packages/git-workflows/dist/bin/purge-file.js",
-    "git:search-commits": "node packages/git-workflows/dist/bin/search-commits.js",
-    "git:bisect": "node packages/git-workflows/dist/bin/bisect.js",
-    "git:tag-create": "node packages/git-workflows/dist/bin/tag-create.js",
-    "git:tag-delete": "node packages/git-workflows/dist/bin/tag-delete.js"
-  }
-}
-```
-
-**Step 3.** Add a config file to your project root (optional — sane defaults apply):
-
-```bash
-cp node_modules/@coolkits/git-workflows/git-controls.config.example.json git-controls.config.json
-# Edit to match your branch names
-```
 
 ---
 
@@ -108,11 +107,11 @@ Select your workflow with `"architecture"` in `git-controls.config.json`.
 Separates common/shared code changes from feature changes across branches.
 
 ```bash
-yarn git:extract-common        # Extract shared changes → common/* branch → MR to root
-yarn git:sync-from-root        # Pull root changes into your feature branch
-yarn git:create-mr             # Open MR: feature → dev (for CI build)
-yarn git:start-branch user-auth        # Create feature/user-auth from dev
-yarn git:finish-branch                 # Push + MR → dev
+coolkit extract-common        # Extract shared changes → common/* branch → MR to root
+coolkit sync-from-root        # Pull root changes into your feature branch
+coolkit create-mr             # Open MR: feature → dev (for CI build)
+coolkit start-branch user-auth        # Create feature/user-auth from dev
+coolkit finish-branch                 # Push + MR → dev
 ```
 
 ### `gitflow`
@@ -120,10 +119,10 @@ yarn git:finish-branch                 # Push + MR → dev
 Classic gitflow with `develop`, `release/*`, `hotfix/*`.
 
 ```bash
-yarn git:start-branch user-auth --type feature    # feature/user-auth from develop
-yarn git:start-branch 1.2.0 --type release        # release/1.2.0 from develop
-yarn git:start-branch urgent-fix --type hotfix    # hotfix/urgent-fix from main
-yarn git:finish-branch                            # MR → develop (feature) / main (release/hotfix)
+coolkit start-branch user-auth --type feature    # feature/user-auth from develop
+coolkit start-branch 1.2.0 --type release        # release/1.2.0 from develop
+coolkit start-branch urgent-fix --type hotfix    # hotfix/urgent-fix from main
+coolkit finish-branch                            # MR → develop (feature) / main (release/hotfix)
 ```
 
 ### Other architectures
@@ -135,21 +134,21 @@ yarn git:finish-branch                            # MR → develop (feature) / m
 | `trunk-based` | `main`                | short-lived feature → quick MR to main |
 | `monorepo`    | `main`                | scoped `feature/pkg-name` → main       |
 
-### `git-create-mr` — Universal MR creator
+### `create-mr` - Universal MR creator
 
 ```bash
-yarn git:create-mr                                  # current branch → default target
-yarn git:create-mr --target main --checkout         # safe MR branch (keeps source clean)
-yarn git:create-mr --target staging --checkout --base target  # surface conflicts locally
-yarn git:create-mr --source feature/auth --target develop
-yarn git:create-mr --dry-run
+coolkit create-mr                                  # current branch → default target
+coolkit create-mr --target main --checkout         # safe MR branch (keeps source clean)
+coolkit create-mr --target staging --checkout --base target  # surface conflicts locally
+coolkit create-mr --source feature/auth --target develop
+coolkit create-mr --dry-run
 ```
 
 | Flag                    | Description                                                           |
 | ----------------------- | --------------------------------------------------------------------- |
 | `--source`              | Source branch (default: current)                                      |
 | `--target`              | Target branch (default: architecture-aware)                           |
-| `--checkout`            | Create a `mr/<slug>-<ts>` branch — keeps your feature branch pristine |
+| `--checkout`            | Create a `mr/<slug>-<ts>` branch - keeps your feature branch pristine |
 | `--base source\|target` | What the MR branch is based on (default: `source`)                    |
 | `--no-push`             | Skip push, just open the MR URL                                       |
 | `--dry-run`             | Preview without creating anything                                     |
@@ -162,74 +161,74 @@ Commands for everyday pain points. All work independently of architecture.
 
 ### Undo & Revert
 
-| Command                         | What it does                                                       |
-| ------------------------------- | ------------------------------------------------------------------ |
-| `yarn git:undo`                 | Undo last N **unpushed** commits (keeps changes staged by default) |
-| `yarn git:undo --hard`          | Undo last N commits AND discard all changes                        |
-| `yarn git:revert-commit <hash>` | Safely revert a **pushed** commit (creates a new revert commit)    |
+| Command                        | What it does                                                       |
+| ------------------------------ | ------------------------------------------------------------------ |
+| `coolkit undo`                 | Undo last N **unpushed** commits (keeps changes staged by default) |
+| `coolkit undo --hard`          | Undo last N commits AND discard all changes                        |
+| `coolkit revert-commit <hash>` | Safely revert a **pushed** commit (creates a new revert commit)    |
 
 ```bash
-yarn git:undo --count 2           # undo 2 commits, keep changes
-yarn git:revert-commit abc1234    # safe for shared branches
+coolkit undo --count 2           # undo 2 commits, keep changes
+coolkit revert-commit abc1234    # safe for shared branches
 ```
 
 ### Fix Last Commit
 
-| Command                                | What it does                        |
-| -------------------------------------- | ----------------------------------- |
-| `yarn git:amend --message "fix: typo"` | Change last commit message          |
-| `yarn git:amend --add src/file.ts`     | Add a forgotten file to last commit |
-| `yarn git:amend --remove .env`         | Remove a file from last commit      |
-| `yarn git:amend --force`               | Amend + force-push (warns team)     |
-| `yarn git:squash --count 3`            | Squash last 3 commits into one      |
+| Command                               | What it does                        |
+| ------------------------------------- | ----------------------------------- |
+| `coolkit amend --message "fix: typo"` | Change last commit message          |
+| `coolkit amend --add src/file.ts`     | Add a forgotten file to last commit |
+| `coolkit amend --remove .env`         | Remove a file from last commit      |
+| `coolkit amend --force`               | Amend + force-push (warns team)     |
+| `coolkit squash --count 3`            | Squash last 3 commits into one      |
 
 ### Move & Copy Commits
 
-| Command                                             | What it does                                |
-| --------------------------------------------------- | ------------------------------------------- |
-| `yarn git:move-commits --to feature/correct-branch` | Move last N commits to the right branch     |
-| `yarn git:cherry-pick abc1234`                      | Apply a specific commit from another branch |
-| `yarn git:cherry-pick abc1234 --range-to def5678`   | Apply a range of commits                    |
+| Command                                            | What it does                                |
+| -------------------------------------------------- | ------------------------------------------- |
+| `coolkit move-commits --to feature/correct-branch` | Move last N commits to the right branch     |
+| `coolkit cherry-pick abc1234`                      | Apply a specific commit from another branch |
+| `coolkit cherry-pick abc1234 --range-to def5678`   | Apply a range of commits                    |
 
 ```bash
-yarn git:move-commits --to feature/auth --count 3   # "I committed to main by mistake"
-yarn git:cherry-pick abc1234 --no-commit             # apply but don't commit yet
+coolkit move-commits --to feature/auth --count 3   # "I committed to main by mistake"
+coolkit cherry-pick abc1234 --no-commit             # apply but don't commit yet
 ```
 
 ### Branch Management
 
-| Command                                   | What it does                                    |
-| ----------------------------------------- | ----------------------------------------------- |
-| `yarn git:delete-branch feature/done`     | Delete branch **local + remote** in one command |
-| `yarn git:recover-branch feature/deleted` | Recover a recently deleted branch from reflog   |
-| `yarn git:prune-branches`                 | Remove all local branches whose remote is gone  |
-| `yarn git:prune-branches --dry-run`       | Preview what would be deleted                   |
+| Command                                  | What it does                                    |
+| ---------------------------------------- | ----------------------------------------------- |
+| `coolkit delete-branch feature/done`     | Delete branch **local + remote** in one command |
+| `coolkit recover-branch feature/deleted` | Recover a recently deleted branch from reflog   |
+| `coolkit prune-branches`                 | Remove all local branches whose remote is gone  |
+| `coolkit prune-branches --dry-run`       | Preview what would be deleted                   |
 
 ### Conflict Resolution
 
-| Command                     | What it does                                          |
-| --------------------------- | ----------------------------------------------------- |
-| `yarn git:abort`            | Auto-detect and abort stuck merge/rebase/cherry-pick  |
-| `yarn git:resolve --theirs` | Resolve all conflicts by accepting incoming changes   |
-| `yarn git:resolve --ours`   | Resolve all conflicts by keeping local changes        |
-| `yarn git:pull-rebase`      | `git pull --rebase` — no merge commit, linear history |
+| Command                    | What it does                                          |
+| -------------------------- | ----------------------------------------------------- |
+| `coolkit abort`            | Auto-detect and abort stuck merge/rebase/cherry-pick  |
+| `coolkit resolve --theirs` | Resolve all conflicts by accepting incoming changes   |
+| `coolkit resolve --ours`   | Resolve all conflicts by keeping local changes        |
+| `coolkit pull-rebase`      | `git pull --rebase` - no merge commit, linear history |
 
 ### History & Investigation
 
-| Command                                       | What it does                                                              |
-| --------------------------------------------- | ------------------------------------------------------------------------- |
-| `yarn git:search-commits --message "feat:"`   | Search commits by message                                                 |
-| `yarn git:search-commits --content "API_KEY"` | Search commits that changed a string (useful for finding secret exposure) |
-| `yarn git:bisect start --good <hash>`         | Start guided binary search to find a bug-introducing commit               |
-| `yarn git:bisect good\|bad`                   | Mark current commit during bisect                                         |
-| `yarn git:bisect reset`                       | Abort bisect and return to your branch                                    |
+| Command                                      | What it does                                   |
+| -------------------------------------------- | ---------------------------------------------- |
+| `coolkit search-commits --message "feat:"`   | Search commits by message                      |
+| `coolkit search-commits --content "API_KEY"` | Search commits that changed a string           |
+| `coolkit bisect start --good <hash>`         | Start binary search for bug-introducing commit |
+| `coolkit bisect good\|bad`                   | Mark current commit during bisect              |
+| `coolkit bisect reset`                       | Abort bisect and return to your branch         |
 
 ### Sensitive File Removal
 
 ```bash
 # Always preview first!
-yarn git:purge-file .env --dry-run
-yarn git:purge-file .env
+coolkit purge-file .env --dry-run
+coolkit purge-file .env
 
 # After running, force-push all branches + notify team to re-clone
 git push origin --force --all
@@ -239,11 +238,11 @@ git push origin --force --all
 
 ### Tags
 
-| Command                                         | What it does                          |
-| ----------------------------------------------- | ------------------------------------- |
-| `yarn git:tag-create v1.2.0`                    | Create annotated tag + push to remote |
-| `yarn git:tag-create v1.2.0 --message "Stable"` | Tag with custom message               |
-| `yarn git:tag-delete v1.2.0`                    | Delete tag **local + remote**         |
+| Command                                        | What it does                          |
+| ---------------------------------------------- | ------------------------------------- |
+| `coolkit tag-create v1.2.0`                    | Create annotated tag + push to remote |
+| `coolkit tag-create v1.2.0 --message "Stable"` | Tag with custom message               |
+| `coolkit tag-delete v1.2.0`                    | Delete tag **local + remote**         |
 
 ---
 
@@ -262,11 +261,11 @@ Create `git-controls.config.json` in your project root:
 }
 ```
 
-Config files per architecture are available in the source repository under [`config-examples/`](https://github.com/coolkits-teams/coolkits-git-workflows/tree/master/config-examples).
+Config files per architecture: [`config-examples/`](./config-examples/)
 
 | Field                  | Default         | Description                                               |
 | ---------------------- | --------------- | --------------------------------------------------------- |
-| `architecture`         | `feature-based` | Workflow preset — drives all branch defaults              |
+| `architecture`         | `feature-based` | Workflow preset - drives all branch defaults              |
 | `mainBranch`           | `main`          | Canonical production branch                               |
 | `developBranch`        | `develop`       | Integration branch (gitflow)                              |
 | `rootBranch`           | `root`          | Common-source branch (feature-based)                      |
@@ -276,7 +275,7 @@ Config files per architecture are available in the source repository under [`con
 | `featureBranchPrefix`  | `feature`       | Prefix for feature branches                               |
 | `releaseBranchPrefix`  | `release`       | Prefix for release branches (gitflow)                     |
 | `hotfixBranchPrefix`   | `hotfix`        | Prefix for hotfix branches (gitflow)                      |
-| `mrBranchPrefix`       | `mr`            | Prefix for safe MR branches (`git-create-mr --checkout`)  |
+| `mrBranchPrefix`       | `mr`            | Prefix for safe MR branches (`create-mr --checkout`)      |
 | `featurePath`          | `src/features`  | Paths treated as feature-specific (feature-based)         |
 | `commonExcludePaths`   | `[]`            | Directories excluded from common extract                  |
 | `commonExcludeFiles`   | `[]`            | Files excluded from common extract                        |
@@ -287,13 +286,22 @@ Config files per architecture are available in the source repository under [`con
 
 ---
 
-## 🔧 Updating the Vendored Library
+## ☕ Buy me a coffee
 
-```bash
-# In the source repo (git-controls/)
-npm run verify   # type-check + lint + test + build
-# Then copy dist/ to your project's packages/git-workflows/dist/
-```
+If this tool saves you time on git headaches, consider buying me a coffee - any amount is appreciated.
+
+<div align="center">
+
+<table>
+<tr>
+<td align="center">
+<img src="./docs/donate/momo.jpg" alt="MoMo QR code" width="220" /><br/>
+<em>Scan with MoMo app</em>
+</td>
+</tr>
+</table>
+
+</div>
 
 ---
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-revert-commit — Safely revert a commit that was already pushed.
  * Creates a new "revert" commit instead of rewriting history.

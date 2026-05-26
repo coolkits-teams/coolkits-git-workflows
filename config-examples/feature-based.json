@@ -1,17 +1,31 @@
 {
   "_doc": "Feature-based architecture. Common/shared code is separated from feature code. Use git-extract-common to push shared changes to root, and git-sync-from-root to pull root into your feature branch.",
+
   "architecture": "feature-based",
+
   "mainBranch": "main",
+
   "rootBranch": "root",
+
   "devBranch": "dev",
+
   "featureBranchPrefix": "feature",
+
   "commonBranchPrefix": "common",
+
   "mrBranchPrefix": "mr",
+
   "featurePath": ["src/features"],
+
   "commonExcludePaths": ["packages/git-workflows"],
+
   "commonExcludeFiles": ["public/version.json"],
+
   "remote": "origin",
+
   "protectedBranches": ["root", "dev", "main", "master"],
+
   "mergeRequestProvider": "gitlab",
+
   "syncStrategy": "merge"
 }

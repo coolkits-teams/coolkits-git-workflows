@@ -1,13 +1,23 @@
 {
   "_doc": "Monorepo flow. All packages live in one repository. Feature branches are scoped to a package: 'feature/pkg-name-description'. MRs target main. Shared package changes go through the normal feature PR process.",
+
   "architecture": "monorepo",
+
   "mainBranch": "main",
+
   "developBranch": "main",
+
   "featureBranchPrefix": "feature",
+
   "hotfixBranchPrefix": "hotfix",
+
   "mrBranchPrefix": "mr",
+
   "remote": "origin",
+
   "protectedBranches": ["main", "master", "staging", "production"],
+
   "mergeRequestProvider": "github",
+
   "syncStrategy": "rebase"
 }

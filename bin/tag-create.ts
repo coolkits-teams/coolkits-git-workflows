@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-tag-create — Create an annotated tag and push it to origin.
  *

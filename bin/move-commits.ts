@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-move-commits — Move the last N commits to a different branch.
  * Ideal for "I committed to main by mistake" situations.

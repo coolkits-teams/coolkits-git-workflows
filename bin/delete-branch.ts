@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-delete-branch — Delete a branch both locally and on the remote in one command.
  *

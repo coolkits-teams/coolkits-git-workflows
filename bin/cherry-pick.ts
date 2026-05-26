@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-cherry-pick — Apply specific commit(s) from another branch.
  *

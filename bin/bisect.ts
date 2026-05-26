@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-bisect — Guided binary search to find which commit introduced a bug.
  *

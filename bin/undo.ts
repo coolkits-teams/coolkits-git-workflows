@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 /**
  * git-undo — Undo the last N local (unpushed) commits.
  *
