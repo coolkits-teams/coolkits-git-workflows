@@ -16,6 +16,13 @@ export { loadConfig } from './config/load-config.js';
 
 export { createLogger } from './utils/logger.js';
 export { parseCliArgs } from './utils/cli-args.js';
+export {
+  buildCommonPathspec,
+  directoryExcludePathspec,
+  fileExcludePathspec,
+  normalizePathList,
+  normalizeRepoPath,
+} from './utils/common-pathspec.js';
 
 export { createGitClient } from './core/git-client.js';
 export { createBranchResolver } from './core/branch-resolver.js';

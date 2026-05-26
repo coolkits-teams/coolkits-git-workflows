@@ -2,6 +2,7 @@ import { createBranchResolver } from '../core/branch-resolver.js';
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
 import type { Config, GitClient, Logger, SyncOptions, SyncResult } from '../types.js';
+import { slugifyBranchName } from '../utils/extract-labels.js';
 
 export function runSyncFromRootWorkflow({
   config,
@@ -34,8 +35,8 @@ export function runSyncFromRootWorkflow({
   logger.info(`Fetching ${rootRef}...`);
   git.runOrThrow(['fetch', config.remote, config.rootBranch]);
 
-  const behind = Number(git.runOrThrow(['rev-list', '--count', `HEAD..${rootRef}`]));
-  const ahead = Number(git.runOrThrow(['rev-list', '--count', `${rootRef}..HEAD`]));
+  const behind = Number(git.runOrThrow(['rev-list', '--count', `HEAD..${rootRef}`]).trim());
+  const ahead = Number(git.runOrThrow(['rev-list', '--count', `${rootRef}..HEAD`]).trim());
 
   logger.info(
     `Branch status vs ${rootRef}: ahead=${ahead.toString()}, behind=${behind.toString()}`,
@@ -95,7 +96,7 @@ function createBackupTag(git: GitClient, branch: string): string {
     .toISOString()
     .replace(/[:.TZ-]/g, '')
     .slice(0, 15);
-  const tagName = `backup/${branch.replace(/\//g, '-')}-${timestamp}`;
+  const tagName = `backup/${slugifyBranchName(branch)}-${timestamp}`;
   git.runOrThrow(['tag', tagName]);
   return tagName;
 }

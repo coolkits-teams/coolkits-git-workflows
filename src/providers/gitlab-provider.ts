@@ -12,7 +12,10 @@ export function createGitLabProvider({
   logger: Logger;
 }): GitLabProvider {
   const getRepoUrl = (): string =>
-    git.runOrThrow(['remote', 'get-url', config.remote]).replace(/\.git$/, '');
+    git
+      .runOrThrow(['remote', 'get-url', config.remote])
+      .trim()
+      .replace(/\.git$/, '');
 
   const buildMergeRequestUrl = (sourceBranch: string): string => {
     const params = new URLSearchParams({
@@ -26,7 +29,7 @@ export function createGitLabProvider({
     spawnSync('glab', ['--version'], { encoding: 'utf8', stdio: 'pipe' }).status === 0;
 
   const isGlabAuthenticated = (): boolean => {
-    const remoteUrl = git.run(['remote', 'get-url', config.remote]).stdout;
+    const remoteUrl = git.run(['remote', 'get-url', config.remote]).stdout.trim();
     const hostMatch = /(?:@|:\/\/)([^/:]+)/.exec(remoteUrl);
     const host = hostMatch?.[1];
 

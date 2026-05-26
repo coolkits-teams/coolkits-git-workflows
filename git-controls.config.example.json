@@ -7,6 +7,9 @@
 
   "featurePath": ["src/features"],
 
+  "commonExcludePaths": ["service-worker-api", "packages/git-workflows"],
+  "commonExcludeFiles": ["public/version.json", "public/mockServiceWorker.js"],
+
   "commonBranchPrefix": "common",
 
   "protectedBranches": ["root", "dev", "main", "master", "develop"],

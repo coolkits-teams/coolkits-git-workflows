@@ -12,7 +12,7 @@ export function createBranchResolver({
   const resolve = (explicitBranch?: string | null): string => {
     if (explicitBranch) return explicitBranch;
 
-    const current = git.run(['branch', '--show-current']).stdout;
+    const current = git.run(['branch', '--show-current']).stdout.trim();
     if (!current) {
       throw new Error('Detached HEAD detected. Checkout a feature branch or pass --branch.');
     }
@@ -34,7 +34,7 @@ export function createBranchResolver({
   };
 
   const checkout = (branch: string): void => {
-    const currentBranch = git.runOrThrow(['branch', '--show-current']);
+    const currentBranch = git.runOrThrow(['branch', '--show-current']).trim();
     if (currentBranch === branch) return;
 
     const localExists = git.run(['show-ref', '--verify', `refs/heads/${branch}`]).ok;

@@ -3,6 +3,14 @@ import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
 import { createGitLabProvider } from '../providers/gitlab-provider.js';
 import type { Config, ExtractOptions, ExtractResult, Logger } from '../types.js';
+import { buildCommonPathspec } from '../utils/common-pathspec.js';
+import {
+  buildCommonBranchName,
+  buildExtractCommitMessage,
+  buildMergeRequestDescription,
+  buildMergeRequestTitle,
+  formatExtractTimestamp,
+} from '../utils/extract-labels.js';
 import { createTempDir, safeRemove, writeTempFile } from '../utils/temp-workspace.js';
 
 export function runExtractCommonWorkflow({
@@ -43,11 +51,11 @@ export function runExtractCommonWorkflow({
   logger.info(`Fetching ${rootRef}...`);
   git.runOrThrow(['fetch', config.remote, config.rootBranch]);
 
-  const mergeBase = git.runOrThrow(['merge-base', rootRef, 'HEAD']);
-  const rootTip = git.runOrThrow(['rev-parse', rootRef]);
+  const mergeBase = git.runOrThrow(['merge-base', rootRef, 'HEAD']).trim();
+  const rootTip = git.runOrThrow(['rev-parse', rootRef]).trim();
 
   if (mergeBase !== rootTip) {
-    const behind = git.runOrThrow(['rev-list', '--count', `HEAD..${rootRef}`]);
+    const behind = git.runOrThrow(['rev-list', '--count', `HEAD..${rootRef}`]).trim();
     throw new Error(
       [
         `Feature branch is ${behind} commit(s) behind '${rootRef}'.`,
@@ -61,7 +69,7 @@ export function runExtractCommonWorkflow({
 
   logger.ok('Sync check passed.');
 
-  const pathspec = buildCommonPathspec(config.featurePath);
+  const pathspec = buildCommonPathspec(config);
   const changedFiles = git
     .runOrThrow(['diff', '--name-only', `${mergeBase}..HEAD`, '--', ...pathspec])
     .split('\n')
@@ -85,7 +93,7 @@ export function runExtractCommonWorkflow({
     ...pathspec,
   ]);
 
-  const timestamp = formatTimestamp(new Date());
+  const timestamp = formatExtractTimestamp(new Date());
   const commonBranch = buildCommonBranchName(featureBranch, timestamp, config);
 
   logger.info(`Patch size: ${patchContent.length.toString()} bytes`);
@@ -137,7 +145,14 @@ export function runExtractCommonWorkflow({
       );
     }
 
-    const commitMessage = buildCommitMessage({ featureBranch, timestamp, changedFiles, mergeBase });
+    const commitMessage = buildExtractCommitMessage({
+      featureBranch,
+      commonBranch,
+      timestamp,
+      changedFiles,
+      mergeBase,
+      rootBranch: config.rootBranch,
+    });
     git.runOrThrow(['add', '-A'], { cwd: worktreeDir });
     git.runOrThrow(['commit', '-m', commitMessage], { cwd: worktreeDir });
     logger.ok(`Committed on '${commonBranch}'.`);
@@ -154,7 +169,13 @@ export function runExtractCommonWorkflow({
       provider.createMergeRequest({
         sourceBranch: commonBranch,
         title: buildMergeRequestTitle(featureBranch, timestamp),
-        description: buildMergeRequestDescription({ featureBranch, changedFiles, mergeBase }),
+        description: buildMergeRequestDescription({
+          featureBranch,
+          commonBranch,
+          changedFiles,
+          mergeBase,
+          rootBranch: config.rootBranch,
+        }),
         cwd: worktreeDir,
       });
     }
@@ -163,68 +184,4 @@ export function runExtractCommonWorkflow({
   } finally {
     cleanup();
   }
-}
-
-function buildCommonPathspec(featurePath: string | string[]): string[] {
-  const paths = Array.isArray(featurePath) ? featurePath : [featurePath];
-  const exclusions = paths.flatMap((p) => [`:(exclude)${p}`, `:(exclude)${p}/*`]);
-  return ['.', ...exclusions];
-}
-
-function buildCommonBranchName(featureBranch: string, timestamp: string, config: Config): string {
-  const slug = featureBranch.replace(/^feature\//, '').replace(/[^a-zA-Z0-9-]/g, '-');
-  return `${config.commonBranchPrefix}/${slug}-${timestamp}`;
-}
-
-function formatTimestamp(date: Date): string {
-  return date.toISOString().replace(/[-:T]/g, '').slice(0, 12);
-}
-
-function buildCommitMessage({
-  featureBranch,
-  timestamp,
-  changedFiles,
-  mergeBase,
-}: {
-  featureBranch: string;
-  timestamp: string;
-  changedFiles: string[];
-  mergeBase: string;
-}): string {
-  return [
-    `common: extract from ${featureBranch} (${timestamp})`,
-    '',
-    'Auto-extracted by @coolkits/git-workflows (extract-common workflow).',
-    `Source branch:  ${featureBranch}`,
-    `Files changed:  ${changedFiles.length.toString()}`,
-    `Merge-base:     ${mergeBase}`,
-  ].join('\n');
-}
-
-function buildMergeRequestTitle(featureBranch: string, timestamp: string): string {
-  return `common: from ${featureBranch} (${timestamp})`;
-}
-
-function buildMergeRequestDescription({
-  featureBranch,
-  changedFiles,
-  mergeBase,
-}: {
-  featureBranch: string;
-  changedFiles: string[];
-  mergeBase: string;
-}): string {
-  return [
-    `Auto-extracted common changes from \`${featureBranch}\`.`,
-    '',
-    `**Files changed:** ${changedFiles.length.toString()}`,
-    `**Merge-base:** \`${mergeBase}\``,
-    '',
-    '<details><summary>File list</summary>',
-    '',
-    '```',
-    changedFiles.join('\n'),
-    '```',
-    '</details>',
-  ].join('\n');
 }

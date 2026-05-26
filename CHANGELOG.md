@@ -7,6 +7,46 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [1.1.1] — 2026-05-26
+
+### Fixed
+
+- `git-extract-common`: preserve trailing newline in patch output — fixes
+  `corrupt patch` errors when applying extracted diffs on Windows.
+
+### Changed
+
+- Common branch names now keep the full feature branch slug
+  (e.g. `common/feature-example-202605260220` instead of `common/example-...`).
+- Extract commit, MR title, and MR description prominently include the source
+  feature branch and suggest a merge commit message for merging into `root`.
+
+[1.1.1]: https://github.com/coolkits-teams/coolkits-git-workflows/releases/tag/v1.1.1
+
+---
+
+## [1.1.0] — 2026-05-26
+
+### Added
+
+- `commonExcludePaths` config: exclude **directories** (and all nested files) from
+  common extract — e.g. submodules, vendored tooling (`service-worker-api`,
+  `packages/git-workflows`).
+- `commonExcludeFiles` config: exclude **individual files** from common extract
+  — e.g. generated artifacts (`public/version.json`).
+- `buildCommonPathspec`, `directoryExcludePathspec`, `fileExcludePathspec`,
+  `normalizePathList`, and `normalizeRepoPath` exported from the public API.
+- Unit tests for pathspec building (`npm run test`).
+
+### Changed
+
+- `git-extract-common` diff scope now merges `featurePath`, `commonExcludePaths`,
+  and `commonExcludeFiles` into a single git pathspec.
+
+[1.1.0]: https://github.com/coolkits-teams/coolkits-git-workflows/releases/tag/v1.1.0
+
+---
+
 ## [1.0.0] — 2026-05-25
 
 ### Added

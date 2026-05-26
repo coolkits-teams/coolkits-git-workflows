@@ -1,6 +1,6 @@
 {
   "name": "@coolkits/git-workflows",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "description": "Zero-dependency CLI toolkit for the feature-based branch workflow: extract shared code changes into a dedicated branch, open a merge request, and sync the feature branch back from the integration branch.",
   "type": "module",
   "main": "./dist/index.js",
@@ -31,7 +31,8 @@
     "lint:fix": "eslint src bin --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "verify": "npm run type-check && npm run lint && npm run format:check && npm run build",
+    "verify": "npm run type-check && npm run lint && npm run format:check && npm run test && npm run build",
+    "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "prepublishOnly": "npm run verify",
     "extract-common": "node dist/bin/extract-common.js",
     "sync-from-root": "node dist/bin/sync-from-root.js"

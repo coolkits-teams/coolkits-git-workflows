@@ -129,6 +129,8 @@ Then edit the values that differ from the defaults:
   "devBranch": "dev",
   "remote": "origin",
   "featurePath": ["src/features"],
+  "commonExcludePaths": ["service-worker-api", "packages/git-workflows"],
+  "commonExcludeFiles": ["public/version.json", "public/mockServiceWorker.js"],
   "commonBranchPrefix": "common",
   "protectedBranches": ["root", "dev", "main", "master", "develop"],
   "mergeRequestProvider": "gitlab",
@@ -138,16 +140,36 @@ Then edit the values that differ from the defaults:
 
 ### Config options
 
-| Key                    | Type                    | Default                                    | Description                                                                                            |
-| ---------------------- | ----------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------------ |
-| `rootBranch`           | `string`                | `"root"`                                   | Common-source branch. Extract MRs target this branch; sync merges this branch into the feature branch. |
-| `devBranch`            | `string`                | `"dev"`                                    | Team dev integration branch. Documented for your workflow — feature MRs into `dev` are manual.         |
-| `remote`               | `string`                | `"origin"`                                 | Git remote name.                                                                                       |
-| `featurePath`          | `string \| string[]`    | `"src/features"`                           | Everything **outside** these paths is treated as shared code. Accepts a single string or an array.     |
-| `commonBranchPrefix`   | `string`                | `"common"`                                 | Prefix for generated common branch names: `common/<slug>-<ts>`.                                        |
-| `protectedBranches`    | `string[]`              | `["root","dev","main","master","develop"]` | Branches the CLI will refuse to operate on.                                                            |
-| `mergeRequestProvider` | `"gitlab"` \| `"none"`  | `"gitlab"`                                 | Use `glab` CLI when available; `"none"` to always print a URL.                                         |
-| `syncStrategy`         | `"merge"` \| `"rebase"` | `"merge"`                                  | Strategy used when syncing the feature branch with `root`.                                             |
+| Key                    | Type                    | Default                                    | Description                                                                                                                 |
+| ---------------------- | ----------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------- |
+| `rootBranch`           | `string`                | `"root"`                                   | Common-source branch. Extract MRs target this branch; sync merges this branch into the feature branch.                      |
+| `devBranch`            | `string`                | `"dev"`                                    | Team dev integration branch. Documented for your workflow — feature MRs into `dev` are manual.                              |
+| `remote`               | `string`                | `"origin"`                                 | Git remote name.                                                                                                            |
+| `featurePath`          | `string \| string[]`    | `"src/features"`                           | Everything **outside** these paths is treated as shared code. Accepts a single string or an array.                          |
+| `commonExcludePaths`   | `string \| string[]`    | `[]`                                       | **Directories** skipped during common extract (dir + all nested files). Submodule / tooling folders.                        |
+| `commonExcludeFiles`   | `string \| string[]`    | `[]`                                       | **Individual files** skipped during common extract (exact path only — not siblings or parent dir).                          |
+| `commonBranchPrefix`   | `string`                | `"common"`                                 | Prefix for generated common branch names: `common/<feature-branch-slug>-<ts>` (e.g. `common/feature-example-202605260220`). |
+| `protectedBranches`    | `string[]`              | `["root","dev","main","master","develop"]` | Branches the CLI will refuse to operate on.                                                                                 |
+| `mergeRequestProvider` | `"gitlab"` \| `"none"`  | `"gitlab"`                                 | Use `glab` CLI when available; `"none"` to always print a URL.                                                              |
+| `syncStrategy`         | `"merge"` \| `"rebase"` | `"merge"`                                  | Strategy used when syncing the feature branch with `root`.                                                                  |
+
+#### Excluding paths from common extract
+
+By default, `git-extract-common` treats **everything outside `featurePath`** as common
+code. Two optional lists narrow that scope further:
+
+| Key                  | Use for                        | Git pathspec effect                                  | Example                                               |
+| -------------------- | ------------------------------ | ---------------------------------------------------- | ----------------------------------------------------- |
+| `commonExcludePaths` | Whole directories / submodules | Excludes the dir **and** all files beneath it        | `"service-worker-api"`, `"packages/git-workflows"`    |
+| `commonExcludeFiles` | Single generated / local files | Excludes **one exact file** — siblings stay in scope | `"public/version.json"`, `"git-controls.config.json"` |
+
+```json
+{
+  "featurePath": ["src/features"],
+  "commonExcludePaths": ["service-worker-api", "packages/git-workflows"],
+  "commonExcludeFiles": ["public/version.json", "public/mockServiceWorker.js"]
+}
+```
 
 ### Config as a JS file
 
@@ -350,10 +372,13 @@ gitGraph
 1. Validate working tree is clean (no uncommitted tracked changes).
 2. Resolve the feature branch (current branch or --branch value).
 3. Fetch origin/root. Refuse if the feature branch is behind root.
-4. Compute diff between merge-base(root, HEAD) and HEAD, excluding <featurePath>.
+4. Compute diff between merge-base(root, HEAD) and HEAD, excluding:
+   - everything under `featurePath` (feature-specific code),
+   - directories listed in `commonExcludePaths`,
+   - individual files listed in `commonExcludeFiles`.
 5. Write the diff to a temporary patch file.
 6. Create a git worktree from origin/root on a new branch:
-       common/<slug>-<YYYYMMDDHHmm>
+       common/<feature-branch-slug>-<YYYYMMDDHHmm>
 7. Apply the patch (git apply --3way).
 8. Commit, push, and open a merge request via glab (or print a URL).
 ```
@@ -364,7 +389,7 @@ feature/product (your branch)
   ├── src/features/product/      ← STAYS in feature branch
   │
   ├── src/shared/product-api/   ─┐
-  ├── src/utils/format.ts        ├── EXTRACTED → common/product-20260525-0900
+  ├── src/utils/format.ts        ├── EXTRACTED → common/feature-product-20260525-0900
   └── src/i18n/vi/product.json  ─┘              MR → root (not dev)
 ```
 
@@ -445,6 +470,9 @@ console.log(result); // { status: 'extracted', commonBranch: '...', files: [...]
 | `createBranchResolver`       | Branch resolution + checkout helpers  |
 | `createWorkingTreeInspector` | Clean check / dirty file inspector    |
 | `createGitLabProvider`       | MR creation via `glab` CLI            |
+| `buildCommonPathspec`        | Build git pathspec for extract scope  |
+| `directoryExcludePathspec`   | Pathspec entries for one directory    |
+| `fileExcludePathspec`        | Pathspec entry for one file           |
 
 ---
 

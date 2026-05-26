@@ -9,6 +9,16 @@ export interface Config {
   readonly remote: string;
   /** Path(s) treated as feature-specific. Everything outside is shared/common code. */
   readonly featurePath: string | string[];
+  /**
+   * Directory paths excluded from common extract (dev tooling, submodules, local packages, …).
+   * Each entry excludes the directory and all nested files.
+   */
+  readonly commonExcludePaths: string | string[];
+  /**
+   * Individual file paths excluded from common extract (generated artifacts, local config, …).
+   * Each entry excludes exactly one file — not its parent directory.
+   */
+  readonly commonExcludeFiles: string | string[];
   /** Prefix for generated common branch names: `<prefix>/<slug>-<timestamp>`. */
   readonly commonBranchPrefix: string;
   /** Branches the CLI will refuse to operate on as a feature branch. */

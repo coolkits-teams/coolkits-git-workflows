@@ -14,6 +14,7 @@ const run = (label, cmd) => {
 run('Type check', 'npm run type-check');
 run('Lint', 'npm run lint');
 run('Format check', 'npm run format:check');
+run('Unit tests', 'npm run test');
 run('Build', 'npm run build');
 
 process.stdout.write('\n✔ verify OK\n');

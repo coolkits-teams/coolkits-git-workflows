@@ -4,7 +4,7 @@ import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'scripts/**'] },
+  { ignores: ['dist/**', 'node_modules/**', 'scripts/**', '**/*.test.ts'] },
 
   js.configs.recommended,
   ...tseslint.configs.strictTypeChecked,

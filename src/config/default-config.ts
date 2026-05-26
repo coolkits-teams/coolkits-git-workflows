@@ -24,6 +24,18 @@ export const DEFAULT_CONFIG: Readonly<Config> = Object.freeze({
    */
   featurePath: 'src/features',
 
+  /**
+   * Directories skipped when detecting common changes (submodules, vendored tooling, …).
+   * @example ['service-worker-api', 'packages/git-workflows']
+   */
+  commonExcludePaths: [],
+
+  /**
+   * Individual files skipped when detecting common changes (build artifacts, local-only config).
+   * @example ['public/version.json', 'git-controls.config.json']
+   */
+  commonExcludeFiles: [],
+
   commonBranchPrefix: 'common',
 
   protectedBranches: ['root', 'dev', 'main', 'master', 'develop'],
