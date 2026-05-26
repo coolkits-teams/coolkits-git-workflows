@@ -1,0 +1,11 @@
+{
+  "_doc": "GitHub Flow. Simple model: main is always deployable. Features branch off main, PR back to main, deploy immediately. No develop branch — main is both integration and production.",
+  "architecture": "github-flow",
+  "mainBranch": "main",
+  "featureBranchPrefix": "feature",
+  "mrBranchPrefix": "mr",
+  "remote": "origin",
+  "protectedBranches": ["main", "master"],
+  "mergeRequestProvider": "github",
+  "syncStrategy": "rebase"
+}

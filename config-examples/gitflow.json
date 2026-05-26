@@ -1,0 +1,14 @@
+{
+  "_doc": "Gitflow architecture. Branching model: main (production) + develop (integration) + feature/* + release/* + hotfix/*. Use git-start-branch --type feature|release|hotfix and git-finish-branch to automate MR creation.",
+  "architecture": "gitflow",
+  "mainBranch": "main",
+  "developBranch": "develop",
+  "featureBranchPrefix": "feature",
+  "releaseBranchPrefix": "release",
+  "hotfixBranchPrefix": "hotfix",
+  "mrBranchPrefix": "mr",
+  "remote": "origin",
+  "protectedBranches": ["main", "master", "develop"],
+  "mergeRequestProvider": "gitlab",
+  "syncStrategy": "merge"
+}

@@ -1,0 +1,12 @@
+{
+  "_doc": "Trunk-Based Development. All developers commit to 'main' (trunk) frequently. Feature branches are very short-lived (hours, not days). Heavy use of feature flags. No long-lived branches.",
+  "architecture": "trunk-based",
+  "mainBranch": "main",
+  "featureBranchPrefix": "feature",
+  "releaseBranchPrefix": "release",
+  "mrBranchPrefix": "mr",
+  "remote": "origin",
+  "protectedBranches": ["main", "master"],
+  "mergeRequestProvider": "github",
+  "syncStrategy": "rebase"
+}

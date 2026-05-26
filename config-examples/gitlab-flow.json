@@ -1,0 +1,13 @@
+{
+  "_doc": "GitLab Flow with environment branches. Code flows: feature/* → main → staging → production. Each environment branch represents a deployment target. Promotes via MR — no direct deploys.",
+  "architecture": "gitlab-flow",
+  "mainBranch": "main",
+  "stagingBranch": "staging",
+  "productionBranch": "production",
+  "featureBranchPrefix": "feature",
+  "mrBranchPrefix": "mr",
+  "remote": "origin",
+  "protectedBranches": ["main", "master", "staging", "production"],
+  "mergeRequestProvider": "gitlab",
+  "syncStrategy": "merge"
+}

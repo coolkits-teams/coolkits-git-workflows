@@ -1,0 +1,68 @@
+{
+  "$schema": "https://raw.githubusercontent.com/coolkits-teams/coolkits-git-workflows/master/git-controls.config.example.json",
+
+  "_doc_architecture": "Selects the git workflow preset. Each preset ships sensible defaults for all branch-role fields below. Individual overrides always win over the preset. Supported: 'feature-based' (default), 'gitflow', 'github-flow', 'gitlab-flow', 'trunk-based', 'monorepo'.",
+  "architecture": "feature-based",
+
+  "_doc_branch_names": "All branch name fields are OPTIONAL — unset fields inherit from the chosen architecture preset, which falls back to DEFAULT_CONFIG. Only set fields that differ from the preset.",
+
+  "_doc_mainBranch": "Canonical production branch. Used as the hotfix base in gitflow. Default: 'main'.",
+  "mainBranch": "main",
+
+  "_doc_developBranch": "Integration branch for in-progress work. gitflow: 'develop'. github-flow / gitlab-flow / trunk: same as mainBranch. Default: 'develop'.",
+  "developBranch": "develop",
+
+  "_doc_rootBranch": "Common/shared-source integration branch (feature-based only). git-extract-common opens MRs into this branch. git-sync-from-root merges this into your feature branch. Default: 'root'.",
+  "rootBranch": "root",
+
+  "_doc_devBranch": "Dev-build integration branch (feature-based only). Feature branches open MRs here to trigger dev environment CI builds. Default: 'dev'.",
+  "devBranch": "dev",
+
+  "_doc_stagingBranch": "Staging environment branch (gitlab-flow only). Code promotes from mainBranch to stagingBranch via MR. Default: 'staging'.",
+  "stagingBranch": "staging",
+
+  "_doc_productionBranch": "Production environment branch (gitlab-flow only). Code promotes from stagingBranch here via MR. Default: 'production'.",
+  "productionBranch": "production",
+
+  "_doc_branch_prefixes": "Used by git-start-branch and git-finish-branch to construct branch names and infer branch type when finishing.",
+
+  "_doc_featureBranchPrefix": "Prefix for feature branches. 'feature' → 'feature/user-auth'. Default: 'feature'.",
+  "featureBranchPrefix": "feature",
+
+  "_doc_releaseBranchPrefix": "Prefix for release branches (gitflow). 'release' → 'release/1.2.0'. Default: 'release'.",
+  "releaseBranchPrefix": "release",
+
+  "_doc_hotfixBranchPrefix": "Prefix for hotfix branches (gitflow). 'hotfix' → 'hotfix/urgent-fix'. Default: 'hotfix'.",
+  "hotfixBranchPrefix": "hotfix",
+
+  "_doc_commonBranchPrefix": "Prefix for auto-generated common branches (feature-based). 'common' → 'common/feature-auth-20260526'. Default: 'common'.",
+  "commonBranchPrefix": "common",
+
+  "_doc_mrBranchPrefix": "Prefix for safe MR branches created by git-create-mr --checkout. 'mr' → 'mr/feature-auth-20260526120000'. Default: 'mr'.",
+  "mrBranchPrefix": "mr",
+
+  "_doc_feature_based_section": "The following fields are only meaningful when architecture = 'feature-based'.",
+
+  "_doc_featurePath": "Path(s) treated as feature-specific source code. Anything OUTSIDE these paths is considered common/shared code and will be extracted by git-extract-common. Accepts a string or an array of strings.",
+  "featurePath": ["src/features"],
+
+  "_doc_commonExcludePaths": "Directories excluded from the common-extract diff entirely. Use for: submodules, vendored packages, generated directories. Each entry excludes the directory root AND all its nested files.",
+  "commonExcludePaths": ["service-worker-api", "packages/git-workflows"],
+
+  "_doc_commonExcludeFiles": "Individual files excluded from the common-extract diff. Use for: build artifacts, version files, local-only config. Each entry excludes exactly one file (not its parent directory).",
+  "commonExcludeFiles": ["public/version.json", "public/mockServiceWorker.js"],
+
+  "_doc_shared_section": "The following fields apply to all architectures.",
+
+  "_doc_remote": "Git remote name. Change if your remote is not named 'origin'. Default: 'origin'.",
+  "remote": "origin",
+
+  "_doc_protectedBranches": "Branches the CLI refuses to use as a source/feature branch. Prevents accidental destructive operations on integration branches.",
+  "protectedBranches": ["root", "dev", "main", "master", "develop", "staging", "production"],
+
+  "_doc_mergeRequestProvider": "MR/PR provider used by all commands that open merge requests. 'gitlab' → glab CLI. 'github' → gh CLI. 'none' → prints browser URL only. Default: 'gitlab'.",
+  "mergeRequestProvider": "gitlab",
+
+  "_doc_syncStrategy": "Sync strategy used by git-sync-from-root. 'merge' creates a merge commit (safer, preserves history context). 'rebase' replays your commits on top of root (linear history, requires force-push). Default: 'merge'.",
+  "syncStrategy": "merge"
+}
