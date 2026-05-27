@@ -28,9 +28,9 @@ pnpm add -D @coolkits/git-workflows
 After install, the `coolkit` command is available globally in your project:
 
 ```bash
-coolkit --help
-coolkit undo --count 2
-coolkit create-mr --target dev
+yarn coolkit --help
+yarn coolkit undo --count 2
+yarn coolkit create-mr --target dev
 ```
 
 ### Optional: add shortcuts to `package.json`
@@ -77,7 +77,7 @@ coolkit create-mr --target dev
 }
 ```
 
-Then run `yarn extract-common` or `npm run extract-common`.
+Then run `yarn coolkit extract-common` or `npm run coolkit extract-common`.
 
 ### Config (optional)
 
@@ -307,6 +307,6 @@ If this tool saves you time on git headaches, consider buying me a coffee - any 
 
 ## 📄 License
 
-MIT © [David Ngo](https://github.com/davidngo239)
+MIT © love by [David Ngo](https://github.com/davidngo239)
 
 **Repository:** [coolkits-teams/coolkits-git-workflows](https://github.com/coolkits-teams/coolkits-git-workflows/tree/master)
