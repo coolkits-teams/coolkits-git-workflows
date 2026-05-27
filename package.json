@@ -33,6 +33,7 @@
     "verify": "npm run type-check && npm run lint && npm run format:check && npm run test && npm run build",
     "test": "node --experimental-strip-types --test src/**/*.test.ts",
     "prepublishOnly": "npm run verify",
+    "coolkit": "node dist/bin/coolkit.js",
     "extract-common": "node dist/bin/coolkit.js extract-common",
     "sync-from-root": "node dist/bin/coolkit.js sync-from-root"
   },
