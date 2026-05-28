@@ -35,8 +35,34 @@ export async function loadConfig({ cwd = process.cwd() } = {}): Promise<Readonly
 
   const preset = getArchitecturePreset(architecture);
 
-  // Merge order: base → preset → user override
-  return Object.freeze({ ...DEFAULT_CONFIG, ...preset, ...userOverride });
+  // Merge order: base → preset → user override (deep-merge maps)
+  return Object.freeze({
+    ...DEFAULT_CONFIG,
+    ...preset,
+    ...userOverride,
+    commitTypeByBranchPrefix: {
+      ...DEFAULT_CONFIG.commitTypeByBranchPrefix,
+      ...userOverride.commitTypeByBranchPrefix,
+    },
+    mrTargetByBranchPrefix: {
+      ...DEFAULT_CONFIG.mrTargetByBranchPrefix,
+      ...preset.mrTargetByBranchPrefix,
+      ...userOverride.mrTargetByBranchPrefix,
+    },
+    baseBranchByBranchType: {
+      ...DEFAULT_CONFIG.baseBranchByBranchType,
+      ...preset.baseBranchByBranchType,
+      ...userOverride.baseBranchByBranchType,
+    },
+    semverBumpByCommitType: {
+      ...DEFAULT_CONFIG.semverBumpByCommitType,
+      ...userOverride.semverBumpByCommitType,
+    },
+    additionalBranches: {
+      ...DEFAULT_CONFIG.additionalBranches,
+      ...userOverride.additionalBranches,
+    },
+  });
 }
 
 async function loadProjectOverride(cwd: string): Promise<Partial<Config>> {

@@ -7,7 +7,33 @@ import type { ArchitecturePreset, Config } from '../types.js';
 type PresetDefaults = Omit<
   Config,
   // User must supply these (or fall back to DEFAULT_CONFIG base)
-  'featurePath' | 'commonExcludePaths' | 'commonExcludeFiles' | 'remote' | 'mergeRequestProvider'
+  | 'featurePath'
+  | 'commonExcludePaths'
+  | 'commonExcludeFiles'
+  | 'remote'
+  | 'mergeRequestProvider'
+  // Message formats inherit from DEFAULT_CONFIG unless user overrides
+  | 'createMrTitleFormat'
+  | 'createMrTitleCheckoutFormat'
+  | 'extractCommonMrTitleFormat'
+  | 'extractCommonCommitSubjectFormat'
+  | 'extractCommonRootMergeFormat'
+  | 'commonBranchFormat'
+  | 'mrBranchFormat'
+  | 'featureBranchFormat'
+  | 'releaseBranchFormat'
+  | 'hotfixBranchFormat'
+  | 'fixBranchFormat'
+  | 'choreBranchFormat'
+  | 'syncBackupTagFormat'
+  | 'fixbugBranchFormat'
+  | 'qaBranch'
+  | 'uatBranch'
+  | 'additionalBranches'
+  | 'fixbugBranchPrefix'
+  | 'commitMessageFormat'
+  | 'commitTypeByBranchPrefix'
+  | 'semverBumpByCommitType'
 >;
 
 const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
@@ -36,6 +62,49 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     mrBranchPrefix: 'mr',
     protectedBranches: ['root', 'dev', 'main', 'master', 'develop', 'staging', 'production'],
     syncStrategy: 'merge',
+    mrTargetByBranchPrefix: { feature: 'dev', common: 'root' },
+    baseBranchByBranchType: { feature: 'dev', hotfix: 'main' },
+  },
+
+  /**
+   * Environment promotion flow (main / dev / qa / uat).
+   *
+   * Branch roles:
+   *   main        — source of truth; common/* merges here
+   *   dev         — all feature development integration
+   *   qa          — QA environment
+   *   uat         — UAT / pre-production; hotfix & fixbug base
+   *   feature/*   — new features → MR to dev
+   *   fixbug/*    — sprint fixes → MR to qa
+   *   hotfix/*    — emergency fixes from uat → MR to uat
+   *   common/*    — shared code → MR to main
+   */
+  'env-flow': {
+    architecture: 'env-flow',
+    mainBranch: 'main',
+    developBranch: 'dev',
+    rootBranch: 'main',
+    devBranch: 'dev',
+    stagingBranch: 'qa',
+    productionBranch: 'uat',
+    featureBranchPrefix: 'feature',
+    releaseBranchPrefix: 'release',
+    hotfixBranchPrefix: 'hotfix',
+    commonBranchPrefix: 'common',
+    mrBranchPrefix: 'mr',
+    protectedBranches: ['main', 'dev', 'qa', 'uat', 'master'],
+    syncStrategy: 'merge',
+    mrTargetByBranchPrefix: {
+      feature: 'dev',
+      fixbug: 'qa',
+      hotfix: 'uat',
+      common: 'main',
+    },
+    baseBranchByBranchType: {
+      feature: 'dev',
+      fixbug: 'uat',
+      hotfix: 'uat',
+    },
   },
 
   /**
@@ -65,6 +134,8 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     mrBranchPrefix: 'mr',
     protectedBranches: ['main', 'master', 'develop'],
     syncStrategy: 'merge',
+    mrTargetByBranchPrefix: { feature: 'develop', release: 'main', hotfix: 'main' },
+    baseBranchByBranchType: { feature: 'develop', release: 'develop', hotfix: 'main' },
   },
 
   /**
@@ -91,6 +162,8 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     mrBranchPrefix: 'mr',
     protectedBranches: ['main', 'master'],
     syncStrategy: 'rebase',
+    mrTargetByBranchPrefix: { feature: 'main' },
+    baseBranchByBranchType: { feature: 'main' },
   },
 
   /**
@@ -119,6 +192,8 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     mrBranchPrefix: 'mr',
     protectedBranches: ['main', 'master', 'staging', 'production'],
     syncStrategy: 'merge',
+    mrTargetByBranchPrefix: { feature: 'main' },
+    baseBranchByBranchType: { feature: 'main' },
   },
 
   /**
@@ -145,6 +220,8 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     mrBranchPrefix: 'mr',
     protectedBranches: ['main', 'master'],
     syncStrategy: 'rebase',
+    mrTargetByBranchPrefix: { feature: 'main' },
+    baseBranchByBranchType: { feature: 'main' },
   },
 
   /**
@@ -171,6 +248,8 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     mrBranchPrefix: 'mr',
     protectedBranches: ['main', 'master', 'staging', 'production'],
     syncStrategy: 'merge',
+    mrTargetByBranchPrefix: { feature: 'main' },
+    baseBranchByBranchType: { feature: 'main' },
   },
 };
 

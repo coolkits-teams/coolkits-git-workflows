@@ -1,0 +1,73 @@
+{
+  "_doc": "Environment promotion: main (source of truth) → dev → qa → uat. Feature/fixbug/hotfix/common branch naming and Conventional Commits.",
+
+  "architecture": "env-flow",
+
+  "mainBranch": "main",
+  "devBranch": "dev",
+  "qaBranch": "qa",
+  "uatBranch": "uat",
+  "rootBranch": "main",
+
+  "featureBranchPrefix": "feature",
+  "fixbugBranchPrefix": "fixbug",
+  "hotfixBranchPrefix": "hotfix",
+  "commonBranchPrefix": "common",
+  "mrBranchPrefix": "mr",
+
+  "featurePath": ["src/features"],
+
+  "remote": "origin",
+  "protectedBranches": ["main", "dev", "qa", "uat", "master"],
+
+  "mergeRequestProvider": "gitlab",
+  "syncStrategy": "merge",
+
+  "mrTargetByBranchPrefix": {
+    "feature": "dev",
+    "fixbug": "qa",
+    "hotfix": "uat",
+    "common": "main"
+  },
+
+  "baseBranchByBranchType": {
+    "feature": "dev",
+    "fixbug": "uat",
+    "hotfix": "uat"
+  },
+
+  "featureBranchFormat": "{featureBranchPrefix}/{nameSlug}",
+  "fixbugBranchFormat": "{fixbugBranchPrefix}/{nameSlug}",
+  "hotfixBranchFormat": "{hotfixBranchPrefix}/{nameSlug}",
+  "commonBranchFormat": "{commonBranchPrefix}/{descSlug}",
+
+  "commitMessageFormat": "{type}({scope}) {ticketId}: {description}",
+  "commitTypeByBranchPrefix": {
+    "feature": "feat",
+    "fixbug": "fix",
+    "hotfix": "fix",
+    "common": "chore"
+  },
+
+  "extractCommonCommitSubjectFormat": "{type}({scope}) {ticketId}: {description}",
+  "extractCommonMrTitleFormat": "[common] {descSlug} → {rootBranch}",
+  "extractCommonRootMergeFormat": "chore(common): merge {descSlug} from {featureBranch} ({commonBranch} → {rootBranch})",
+
+  "createMrTitleFormat": "[{sourceBranch}] → {targetBranch}",
+  "createMrTitleCheckoutFormat": "[checkout] {sourceBranch} → {targetBranch}",
+
+  "semverBumpByCommitType": {
+    "feat": "minor",
+    "fix": "patch",
+    "refactor": "none",
+    "style": "none",
+    "test": "none",
+    "docs": "none",
+    "chore": "none",
+    "perf": "patch"
+  },
+
+  "additionalBranches": {
+    "lts": "lts"
+  }
+}

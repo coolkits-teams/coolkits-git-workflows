@@ -24,11 +24,15 @@ const HELP_TEXT = `
 Usage: git-extract-common [options]
 
 Options:
-  --branch <name>   Target branch. Defaults to the current branch.
-  --dry-run         Preview the operation without creating any branch.
-  --no-mr           Push the common branch but do not open a merge request.
-  --debug           Enable verbose debug logging.
-  -h, --help        Show this help.
+  --branch <name>     Feature branch to extract from. Default: current branch.
+  --desc <text>       Short description for common branch slug (e.g. fix-validator-null-check).
+  --ticket <id>       Ticket id for commit message (e.g. PROJ-123).
+  --scope <scope>     Commit scope (default: desc slug or branch name).
+  --type <type>       Commit type: feat, fix, chore, … (default: from config).
+  --dry-run           Preview without creating a branch.
+  --no-mr             Push common branch but skip merge request.
+  --debug             Verbose logging.
+  -h, --help          Show this help.
 `.trim();
 
 async function main(): Promise<void> {
@@ -48,6 +52,10 @@ async function main(): Promise<void> {
       logger,
       options: {
         branch: getFlag('--branch'),
+        desc: getFlag('--desc'),
+        ticketId: getFlag('--ticket'),
+        scope: getFlag('--scope'),
+        type: getFlag('--type'),
         dryRun: hasFlag('--dry-run'),
         skipMergeRequest: hasFlag('--no-mr'),
       },

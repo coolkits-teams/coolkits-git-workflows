@@ -2,7 +2,7 @@ import { createBranchResolver } from '../core/branch-resolver.js';
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
 import type { Config, GitClient, Logger, SyncOptions, SyncResult } from '../types.js';
-import { slugifyBranchName } from '../utils/extract-labels.js';
+import { buildSyncBackupTag, formatExtractTimestamp } from '../utils/extract-labels.js';
 
 export function runSyncFromRootWorkflow({
   config,
@@ -56,7 +56,7 @@ export function runSyncFromRootWorkflow({
       logger.plain(`  ${commit}`);
     });
 
-  const backupTag = createBackupTag(git, featureBranch);
+  const backupTag = createBackupTag(git, featureBranch, config);
   logger.info(`Backup tag created: ${backupTag}`);
   logger.info(`Rollback command:   git reset --hard ${backupTag}`);
 
@@ -91,12 +91,9 @@ export function runSyncFromRootWorkflow({
   return { status: 'synced', backupTag };
 }
 
-function createBackupTag(git: GitClient, branch: string): string {
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[:.TZ-]/g, '')
-    .slice(0, 15);
-  const tagName = `backup/${slugifyBranchName(branch)}-${timestamp}`;
+function createBackupTag(git: GitClient, branch: string, config: Config): string {
+  const timestamp = formatExtractTimestamp(new Date());
+  const tagName = buildSyncBackupTag(branch, timestamp, config);
   git.runOrThrow(['tag', tagName]);
   return tagName;
 }

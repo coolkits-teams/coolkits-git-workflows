@@ -28,29 +28,27 @@ Arguments:
   <name>              Short name / slug (e.g. "user-auth", "1.2.0", "fix-login")
 
 Options:
-  --type <type>       Branch type: feature (default), release, hotfix, fix, chore.
-  --from <branch>     Override the base branch. Default: architecture-aware.
-  --no-push           Create locally only; do not push to remote.
+  --type <type>       feature (default), fixbug, release, hotfix, fix, chore.
+  --from <branch>     Override base branch (e.g. uat for hotfix).
+  --ticket <id>       Suggested ticket id in commit examples (e.g. PROJ-123).
+  --scope <scope>     Suggested commit scope (default: name slug).
+  --no-push           Create locally only.
   --debug             Verbose logging.
   -h, --help          Show this help.
 
 Architecture defaults:
-  feature-based  feature/* from devBranch     | hotfix/* from mainBranch
-  gitflow        feature/* from developBranch  | release/* from developBranch | hotfix/* from mainBranch
-  github-flow    feature/* from mainBranch
-  gitlab-flow    feature/* from mainBranch
-  trunk-based    feature/* from mainBranch (keep branches short-lived!)
-  monorepo       feature/* from mainBranch (use scope: feature/pkg-name)
+  env-flow       feature/* from dev | fixbug/* from uat → MR qa | hotfix/* from uat
+  feature-based  feature/* from dev | common/* → root
+  gitflow        feature/* from develop | hotfix/* from main
 
 Examples:
-  git-start-branch user-auth
-  git-start-branch user-auth --type feature
-  git-start-branch 1.2.0 --type release
-  git-start-branch critical-login-fix --type hotfix
-  git-start-branch update-deps --type chore --no-push
+  coolkit start-branch contract-management
+  coolkit start-branch contract-management --type feature --ticket PROJ-101
+  coolkit start-branch contract-management --type fixbug --ticket PROJ-205
+  coolkit start-branch login-crash-fix --type hotfix --from uat
 `.trim();
 
-const VALID_TYPES: BranchType[] = ['feature', 'release', 'hotfix', 'fix', 'chore'];
+const VALID_TYPES: BranchType[] = ['feature', 'fixbug', 'release', 'hotfix', 'fix', 'chore'];
 
 async function main(): Promise<void> {
   const { hasFlag, getFlag, positionals } = parseCliArgs(process.argv);
@@ -86,6 +84,8 @@ async function main(): Promise<void> {
         name,
         type: rawType as BranchType,
         from: getFlag('--from'),
+        ticketId: getFlag('--ticket'),
+        scope: getFlag('--scope'),
         push: !hasFlag('--no-push'),
       },
     });

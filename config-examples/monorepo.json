@@ -19,5 +19,31 @@
 
   "mergeRequestProvider": "github",
 
-  "syncStrategy": "rebase"
+  "syncStrategy": "rebase",
+
+  "createMrTitleFormat": "{sourceBranch} → {targetBranch}",
+
+  "createMrTitleCheckoutFormat": "[{sourceBranch}] → {targetBranch}",
+
+  "extractCommonMrTitleFormat": "[{featureBranch}] common → {rootBranch} ({timestamp})",
+
+  "extractCommonCommitSubjectFormat": "common: extract from {featureBranch} ({timestamp})",
+
+  "extractCommonRootMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})",
+
+  "commonBranchFormat": "{commonBranchPrefix}/{featureSlug}-{timestamp}",
+
+  "mrBranchFormat": "{mrBranchPrefix}/{sourceSlug}-{timestamp}",
+
+  "featureBranchFormat": "{featureBranchPrefix}/{nameSlug}",
+
+  "releaseBranchFormat": "{releaseBranchPrefix}/{nameSlug}",
+
+  "hotfixBranchFormat": "{hotfixBranchPrefix}/{nameSlug}",
+
+  "fixBranchFormat": "fix/{nameSlug}",
+
+  "choreBranchFormat": "chore/{nameSlug}",
+
+  "syncBackupTagFormat": "backup/{branchSlug}-{timestamp}"
 }

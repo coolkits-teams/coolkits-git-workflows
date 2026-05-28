@@ -6,11 +6,14 @@ import type { Config, ExtractOptions, ExtractResult, Logger } from '../types.js'
 import { buildCommonPathspec } from '../utils/common-pathspec.js';
 import {
   buildCommonBranchName,
+  buildCommitMessage,
   buildExtractCommitMessage,
   buildMergeRequestDescription,
   buildMergeRequestTitle,
   formatExtractTimestamp,
+  slugifyNameSegment,
 } from '../utils/extract-labels.js';
+import { resolveCommitTypeForBranch } from '../utils/workflow-resolver.js';
 import { createTempDir, safeRemove, writeTempFile } from '../utils/temp-workspace.js';
 
 export function runExtractCommonWorkflow({
@@ -94,7 +97,23 @@ export function runExtractCommonWorkflow({
   ]);
 
   const timestamp = formatExtractTimestamp(new Date());
-  const commonBranch = buildCommonBranchName(featureBranch, timestamp, config);
+  const commonBranch = buildCommonBranchName(featureBranch, timestamp, config, options.desc);
+  const commitType = resolveCommitTypeForBranch(config, featureBranch, options.type);
+  const commitScope =
+    options.scope?.trim() !== '' && options.scope != null
+      ? options.scope
+      : slugifyNameSegment(options.desc ?? featureBranch.split('/').pop() ?? 'common');
+  const commitVars: {
+    type: string;
+    scope: string;
+    ticketId: string | null;
+    description: string | null;
+  } = {
+    type: commitType,
+    scope: commitScope,
+    ticketId: options.ticketId ?? null,
+    description: options.desc ?? null,
+  };
 
   logger.info(`Patch size: ${patchContent.length.toString()} bytes`);
   logger.info(`Target common branch: ${commonBranch}`);
@@ -152,10 +171,20 @@ export function runExtractCommonWorkflow({
       changedFiles,
       mergeBase,
       rootBranch: config.rootBranch,
+      config,
+      commitVars,
     });
     git.runOrThrow(['add', '-A'], { cwd: worktreeDir });
     git.runOrThrow(['commit', '-m', commitMessage], { cwd: worktreeDir });
     logger.ok(`Committed on '${commonBranch}'.`);
+    logger.plain(
+      `  Suggested commit style: ${buildCommitMessage(config, {
+        type: commitType,
+        scope: commitScope,
+        ticketId: options.ticketId?.trim() !== '' ? (options.ticketId ?? 'PROJ-000') : 'PROJ-000',
+        description: options.desc ?? 'your change',
+      })}`,
+    );
 
     logger.info(`Pushing to ${config.remote}...`);
     git.runOrThrow(['push', '-u', config.remote, commonBranch], { cwd: worktreeDir });
@@ -169,13 +198,20 @@ export function runExtractCommonWorkflow({
       provider.createMergeRequest({
         sourceBranch: commonBranch,
         targetBranch: config.rootBranch,
-        title: buildMergeRequestTitle(featureBranch, timestamp),
+        title: buildMergeRequestTitle(
+          featureBranch,
+          timestamp,
+          config,
+          commonBranch,
+          changedFiles.length,
+        ),
         description: buildMergeRequestDescription({
           featureBranch,
           commonBranch,
           changedFiles,
           mergeBase,
           rootBranch: config.rootBranch,
+          config,
         }),
         cwd: worktreeDir,
       });

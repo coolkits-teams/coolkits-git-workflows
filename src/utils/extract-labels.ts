@@ -1,5 +1,17 @@
 import type { Config } from '../types.js';
 
+/** Replace `{placeholder}` tokens in a template string. Unknown placeholders are left unchanged. */
+function applyMessageTemplate(
+  template: string,
+  variables: Record<string, string | number>,
+): string {
+  return template.replace(/\{(\w+)\}/g, (match, key: string) => {
+    const value = variables[key];
+    if (value === undefined) return match;
+    return typeof value === 'number' ? value.toString() : value;
+  });
+}
+
 /** Convert a branch name into a safe slug for generated branch names and tags. */
 export function slugifyBranchName(branch: string): string {
   return branch
@@ -14,28 +26,215 @@ export function formatExtractTimestamp(date: Date): string {
   return date.toISOString().replace(/[-:T]/g, '').slice(0, 12);
 }
 
+/** Slugify a short name segment (start-branch `--name` argument). */
+export function slugifyNameSegment(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-zA-Z0-9-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+}
+
 export function buildCommonBranchName(
   featureBranch: string,
   timestamp: string,
-  config: Pick<Config, 'commonBranchPrefix'>,
+  config: Pick<Config, 'commonBranchPrefix' | 'commonBranchFormat'>,
+  description?: string | null,
 ): string {
-  const slug = slugifyBranchName(featureBranch);
-  return `${config.commonBranchPrefix}/${slug}-${timestamp}`;
+  const featureSlug = slugifyBranchName(featureBranch);
+  const descSlug =
+    description != null && description.trim() !== ''
+      ? slugifyNameSegment(description)
+      : featureSlug;
+  return applyMessageTemplate(config.commonBranchFormat, {
+    commonBranchPrefix: config.commonBranchPrefix,
+    featureBranch,
+    featureSlug,
+    descSlug,
+    timestamp,
+  });
 }
 
-export function buildExtractCommitSubject(featureBranch: string, timestamp: string): string {
-  return `common: extract from ${featureBranch} (${timestamp})`;
+/** Conventional commit subject: `{type}({scope}) {ticketId}: {description}` */
+export function buildCommitMessage(
+  config: Pick<Config, 'commitMessageFormat'>,
+  vars: {
+    type: string;
+    scope: string;
+    ticketId: string;
+    description: string;
+  },
+): string {
+  return applyMessageTemplate(config.commitMessageFormat, vars);
 }
 
-export function buildMergeRequestTitle(featureBranch: string, timestamp: string): string {
-  return `[${featureBranch}] common → root (${timestamp})`;
+export function buildMrBranchName(
+  sourceBranch: string,
+  targetBranch: string,
+  timestamp: string,
+  config: Pick<Config, 'mrBranchPrefix' | 'mrBranchFormat'>,
+): string {
+  return applyMessageTemplate(config.mrBranchFormat, {
+    mrBranchPrefix: config.mrBranchPrefix,
+    sourceBranch,
+    sourceSlug: slugifyBranchName(sourceBranch),
+    targetBranch,
+    timestamp,
+  });
+}
+
+export function buildStartBranchName(
+  type: 'feature' | 'fixbug' | 'release' | 'hotfix' | 'fix' | 'chore',
+  name: string,
+  config: Pick<
+    Config,
+    | 'featureBranchFormat'
+    | 'fixbugBranchFormat'
+    | 'releaseBranchFormat'
+    | 'hotfixBranchFormat'
+    | 'fixBranchFormat'
+    | 'choreBranchFormat'
+    | 'featureBranchPrefix'
+    | 'fixbugBranchPrefix'
+    | 'releaseBranchPrefix'
+    | 'hotfixBranchPrefix'
+  >,
+): string {
+  const nameSlug = slugifyNameSegment(name);
+  const vars = {
+    name,
+    nameSlug,
+    featureBranchPrefix: config.featureBranchPrefix,
+    fixbugBranchPrefix: config.fixbugBranchPrefix,
+    releaseBranchPrefix: config.releaseBranchPrefix,
+    hotfixBranchPrefix: config.hotfixBranchPrefix,
+  };
+
+  const formatByType: Record<typeof type, string> = {
+    feature: config.featureBranchFormat,
+    fixbug: config.fixbugBranchFormat,
+    release: config.releaseBranchFormat,
+    hotfix: config.hotfixBranchFormat,
+    fix: config.fixBranchFormat,
+    chore: config.choreBranchFormat,
+  };
+
+  return applyMessageTemplate(formatByType[type], vars);
+}
+
+export function buildSyncBackupTag(
+  branch: string,
+  timestamp: string,
+  config: Pick<Config, 'syncBackupTagFormat'>,
+): string {
+  return applyMessageTemplate(config.syncBackupTagFormat, {
+    branch,
+    branchSlug: slugifyBranchName(branch),
+    timestamp,
+  });
+}
+
+export function buildExtractCommitSubject(
+  featureBranch: string,
+  timestamp: string,
+  config: Pick<Config, 'extractCommonCommitSubjectFormat' | 'commitMessageFormat' | 'rootBranch'>,
+  commonBranch = '',
+  fileCount = 0,
+  commitVars?: {
+    type?: string | null;
+    scope?: string | null;
+    ticketId?: string | null;
+    description?: string | null;
+  },
+): string {
+  if (config.extractCommonCommitSubjectFormat.includes('{type}(')) {
+    const vars = commitVars ?? {};
+    const scope = vars.scope?.trim() !== '' && vars.scope != null ? vars.scope : 'common';
+    const ticketId =
+      vars.ticketId?.trim() !== '' && vars.ticketId != null ? vars.ticketId : 'NO-TICKET';
+    const description =
+      vars.description?.trim() !== '' && vars.description != null
+        ? vars.description
+        : `extract shared changes from ${featureBranch}`;
+    return buildCommitMessage(config, {
+      type: vars.type ?? 'chore',
+      scope,
+      ticketId,
+      description,
+    });
+  }
+
+  return applyMessageTemplate(config.extractCommonCommitSubjectFormat, {
+    featureBranch,
+    commonBranch,
+    rootBranch: config.rootBranch,
+    timestamp,
+    fileCount,
+    descSlug: commonBranch.split('/').pop() ?? featureBranch,
+  });
+}
+
+export function buildMergeRequestTitle(
+  featureBranch: string,
+  timestamp: string,
+  config: Pick<Config, 'extractCommonMrTitleFormat' | 'rootBranch'>,
+  commonBranch = '',
+  fileCount = 0,
+): string {
+  return applyMessageTemplate(config.extractCommonMrTitleFormat, {
+    featureBranch,
+    commonBranch,
+    rootBranch: config.rootBranch,
+    timestamp,
+    fileCount,
+  });
 }
 
 export function buildSuggestedRootMergeMessage(
   featureBranch: string,
   commonBranch: string,
+  config: Pick<Config, 'extractCommonRootMergeFormat' | 'rootBranch'>,
+  timestamp = '',
+  fileCount = 0,
 ): string {
-  return `common: merge shared changes from ${featureBranch} (${commonBranch} → root)`;
+  return applyMessageTemplate(config.extractCommonRootMergeFormat, {
+    featureBranch,
+    commonBranch,
+    rootBranch: config.rootBranch,
+    timestamp,
+    fileCount,
+  });
+}
+
+export function buildCreateMrTitle({
+  sourceBranch,
+  targetBranch,
+  mrBranch,
+  timestamp,
+  architecture,
+  isCheckout,
+  config,
+}: {
+  sourceBranch: string;
+  targetBranch: string;
+  mrBranch: string;
+  timestamp: string;
+  architecture: string;
+  isCheckout: boolean;
+  config: Pick<Config, 'createMrTitleFormat' | 'createMrTitleCheckoutFormat'>;
+}): string {
+  const template =
+    isCheckout && mrBranch !== sourceBranch
+      ? config.createMrTitleCheckoutFormat
+      : config.createMrTitleFormat;
+
+  return applyMessageTemplate(template, {
+    sourceBranch,
+    targetBranch,
+    mrBranch,
+    timestamp,
+    architecture,
+  });
 }
 
 export function buildExtractCommitMessage({
@@ -45,6 +244,8 @@ export function buildExtractCommitMessage({
   changedFiles,
   mergeBase,
   rootBranch,
+  config,
+  commitVars,
 }: {
   featureBranch: string;
   commonBranch: string;
@@ -52,19 +253,49 @@ export function buildExtractCommitMessage({
   changedFiles: string[];
   mergeBase: string;
   rootBranch: string;
+  config: Pick<
+    Config,
+    | 'extractCommonCommitSubjectFormat'
+    | 'extractCommonRootMergeFormat'
+    | 'commitMessageFormat'
+    | 'rootBranch'
+  >;
+  commitVars?: {
+    type?: string | null;
+    scope?: string | null;
+    ticketId?: string | null;
+    description?: string | null;
+  };
 }): string {
+  const fileCount = changedFiles.length;
+  const subject = buildExtractCommitSubject(
+    featureBranch,
+    timestamp,
+    config,
+    commonBranch,
+    fileCount,
+    commitVars,
+  );
+  const suggestedMerge = buildSuggestedRootMergeMessage(
+    featureBranch,
+    commonBranch,
+    config,
+    timestamp,
+    fileCount,
+  );
+
   return [
-    buildExtractCommitSubject(featureBranch, timestamp),
+    subject,
     '',
     'Auto-extracted by @coolkits/git-workflows (extract-common workflow).',
     `Feature branch: ${featureBranch}`,
     `Common branch:  ${commonBranch}`,
     `Merge target:   ${rootBranch}`,
-    `Files changed:  ${changedFiles.length.toString()}`,
+    `Files changed:  ${fileCount.toString()}`,
     `Merge-base:     ${mergeBase}`,
     '',
     `Suggested merge commit when merging into ${rootBranch}:`,
-    buildSuggestedRootMergeMessage(featureBranch, commonBranch),
+    suggestedMerge,
   ].join('\n');
 }
 
@@ -74,12 +305,14 @@ export function buildMergeRequestDescription({
   changedFiles,
   mergeBase,
   rootBranch,
+  config,
 }: {
   featureBranch: string;
   commonBranch: string;
   changedFiles: string[];
   mergeBase: string;
   rootBranch: string;
+  config: Pick<Config, 'extractCommonRootMergeFormat' | 'rootBranch'>;
 }): string {
   return [
     `Auto-extracted common changes from \`${featureBranch}\`.`,
@@ -90,10 +323,10 @@ export function buildMergeRequestDescription({
     `**Files changed:** ${changedFiles.length.toString()}`,
     `**Merge-base:** \`${mergeBase}\``,
     '',
-    'When merging this MR into `root`, keep the feature branch in the merge commit message:',
+    `When merging this MR into \`${rootBranch}\`, keep the feature branch in the merge commit message:`,
     '',
     '```',
-    buildSuggestedRootMergeMessage(featureBranch, commonBranch),
+    buildSuggestedRootMergeMessage(featureBranch, commonBranch, config),
     '```',
     '',
     '<details><summary>File list</summary>',

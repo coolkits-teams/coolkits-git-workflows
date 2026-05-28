@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/coolkits-teams/coolkits-git-workflows/master/git-controls.config.example.json",
 
-  "_doc_architecture": "Selects the git workflow preset. Each preset ships sensible defaults for all branch-role fields below. Individual overrides always win over the preset. Supported: 'feature-based' (default), 'gitflow', 'github-flow', 'gitlab-flow', 'trunk-based', 'monorepo'.",
+  "_doc_architecture": "Selects the git workflow preset. Supported: 'feature-based' (default), 'env-flow' (main/dev/qa/uat), 'gitflow', 'github-flow', 'gitlab-flow', 'trunk-based', 'monorepo'. See config-examples/env-flow.json for SNP-style env promotion.",
   "architecture": "feature-based",
 
   "_doc_branch_names": "All branch name fields are OPTIONAL — unset fields inherit from the chosen architecture preset, which falls back to DEFAULT_CONFIG. Only set fields that differ from the preset.",
@@ -24,7 +24,16 @@
   "_doc_productionBranch": "Production environment branch (gitlab-flow only). Code promotes from stagingBranch here via MR. Default: 'production'.",
   "productionBranch": "production",
 
-  "_doc_branch_prefixes": "Used by git-start-branch and git-finish-branch to construct branch names and infer branch type when finishing.",
+  "_doc_qaBranch": "QA environment branch (env-flow). Sprint fixbug MRs often target here. Default: 'qa'.",
+  "qaBranch": "qa",
+
+  "_doc_uatBranch": "UAT / pre-production branch (env-flow). Hotfix and fixbug branches are created from here. Default: 'uat'.",
+  "uatBranch": "uat",
+
+  "_doc_additionalBranches": "Optional extra long-lived branches, e.g. {\"lts\": \"lts\"}. Use with start-branch --from lts when needed.",
+  "additionalBranches": {},
+
+  "_doc_branch_prefixes": "Used by coolkit start-branch and finish-branch. Examples: feature/contract-management, fixbug/contract-management, hotfix/login-crash-fix, common/fix-validator-null-check.",
 
   "_doc_featureBranchPrefix": "Prefix for feature branches. 'feature' → 'feature/user-auth'. Default: 'feature'.",
   "featureBranchPrefix": "feature",
@@ -32,10 +41,13 @@
   "_doc_releaseBranchPrefix": "Prefix for release branches (gitflow). 'release' → 'release/1.2.0'. Default: 'release'.",
   "releaseBranchPrefix": "release",
 
-  "_doc_hotfixBranchPrefix": "Prefix for hotfix branches (gitflow). 'hotfix' → 'hotfix/urgent-fix'. Default: 'hotfix'.",
+  "_doc_hotfixBranchPrefix": "Prefix for hotfix branches. 'hotfix' → 'hotfix/login-crash-fix'. Default: 'hotfix'.",
   "hotfixBranchPrefix": "hotfix",
 
-  "_doc_commonBranchPrefix": "Prefix for auto-generated common branches (feature-based). 'common' → 'common/feature-auth-20260526'. Default: 'common'.",
+  "_doc_fixbugBranchPrefix": "Prefix for sprint fixbug branches (env-flow). 'fixbug' → 'fixbug/contract-management'. Default: 'fixbug'.",
+  "fixbugBranchPrefix": "fixbug",
+
+  "_doc_commonBranchPrefix": "Prefix for common/shared-code branches. 'common' → 'common/fix-validator-null-check'. Default: 'common'.",
   "commonBranchPrefix": "common",
 
   "_doc_mrBranchPrefix": "Prefix for safe MR branches created by git-create-mr --checkout. 'mr' → 'mr/feature-auth-20260526120000'. Default: 'mr'.",
@@ -64,5 +76,89 @@
   "mergeRequestProvider": "gitlab",
 
   "_doc_syncStrategy": "Sync strategy used by git-sync-from-root. 'merge' creates a merge commit (safer, preserves history context). 'rebase' replays your commits on top of root (linear history, requires force-push). Default: 'merge'.",
-  "syncStrategy": "merge"
+  "syncStrategy": "merge",
+
+  "_doc_messageFormats": "Template strings for auto-generated MR titles and commit messages. Use {placeholder} tokens — values are substituted at runtime. Unknown tokens are left as-is.",
+
+  "_doc_createMrTitleFormat": "MR title for create-mr / finish-branch (direct push, no --checkout). Placeholders: {sourceBranch}, {targetBranch}, {mrBranch}, {timestamp}, {architecture}. Default: '{sourceBranch} → {targetBranch}'.",
+  "createMrTitleFormat": "{sourceBranch} → {targetBranch}",
+
+  "_doc_createMrTitleCheckoutFormat": "MR title for create-mr --checkout (safe MR branch). Same placeholders as createMrTitleFormat. Default: '[{sourceBranch}] → {targetBranch}'.",
+  "createMrTitleCheckoutFormat": "[{sourceBranch}] → {targetBranch}",
+
+  "_doc_extractCommonMrTitleFormat": "MR title for extract-common. Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}. Default: '[{featureBranch}] common → {rootBranch} ({timestamp})'.",
+  "extractCommonMrTitleFormat": "[{featureBranch}] common → {rootBranch} ({timestamp})",
+
+  "_doc_extractCommonCommitSubjectFormat": "Commit subject (first line) for extract-common. Same placeholders as extractCommonMrTitleFormat. Default: 'common: extract from {featureBranch} ({timestamp})'.",
+  "extractCommonCommitSubjectFormat": "common: extract from {featureBranch} ({timestamp})",
+
+  "_doc_extractCommonRootMergeFormat": "Suggested merge commit when merging common MR into root. Same placeholders. Default: 'common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})'.",
+  "extractCommonRootMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})",
+
+  "_doc_branchFormats": "Template strings for auto-generated branch names and backup tags. Use {placeholder} tokens.",
+
+  "_doc_commonBranchFormat": "Common branch from extract-common. Use --desc for slug. Placeholders: {commonBranchPrefix}, {featureBranch}, {featureSlug}, {descSlug}, {timestamp}. env-flow default: '{commonBranchPrefix}/{descSlug}'.",
+  "commonBranchFormat": "{commonBranchPrefix}/{featureSlug}-{timestamp}",
+
+  "_doc_mrBranchFormat": "Safe MR branch from create-mr --checkout. Placeholders: {mrBranchPrefix}, {sourceBranch}, {sourceSlug}, {targetBranch}, {timestamp}. Default: '{mrBranchPrefix}/{sourceSlug}-{timestamp}'.",
+  "mrBranchFormat": "{mrBranchPrefix}/{sourceSlug}-{timestamp}",
+
+  "_doc_featureBranchFormat": "Feature branch from start-branch --type feature. Placeholders: {featureBranchPrefix}, {name}, {nameSlug}. Default: '{featureBranchPrefix}/{nameSlug}'.",
+  "featureBranchFormat": "{featureBranchPrefix}/{nameSlug}",
+
+  "_doc_releaseBranchFormat": "Release branch from start-branch --type release. Placeholders: {releaseBranchPrefix}, {name}, {nameSlug}. Default: '{releaseBranchPrefix}/{nameSlug}'.",
+  "releaseBranchFormat": "{releaseBranchPrefix}/{nameSlug}",
+
+  "_doc_hotfixBranchFormat": "Hotfix branch from start-branch --type hotfix. Placeholders: {hotfixBranchPrefix}, {name}, {nameSlug}. Default: '{hotfixBranchPrefix}/{nameSlug}'.",
+  "hotfixBranchFormat": "{hotfixBranchPrefix}/{nameSlug}",
+
+  "_doc_fixBranchFormat": "Fix branch from start-branch --type fix. Placeholders: {name}, {nameSlug}. Default: 'fix/{nameSlug}'.",
+  "fixBranchFormat": "fix/{nameSlug}",
+
+  "_doc_choreBranchFormat": "Chore branch from start-branch --type chore. Placeholders: {name}, {nameSlug}. Default: 'chore/{nameSlug}'.",
+  "choreBranchFormat": "chore/{nameSlug}",
+
+  "_doc_syncBackupTagFormat": "Backup tag before sync-from-root merge. Placeholders: {branch}, {branchSlug}, {timestamp}. Default: 'backup/{branchSlug}-{timestamp}'.",
+  "syncBackupTagFormat": "backup/{branchSlug}-{timestamp}",
+
+  "_doc_fixbugBranchFormat": "fixbug branch from start-branch --type fixbug. Default: '{fixbugBranchPrefix}/{nameSlug}'.",
+  "fixbugBranchFormat": "{fixbugBranchPrefix}/{nameSlug}",
+
+  "_doc_commitMessageFormat": "Conventional commit subject. Placeholders: {type}, {scope}, {ticketId}, {description}. Default: '{type}({scope}) {ticketId}: {description}'. Types: feat, fix, refactor, style, test, docs, chore, perf.",
+  "commitMessageFormat": "{type}({scope}) {ticketId}: {description}",
+
+  "_doc_commitTypeByBranchPrefix": "Default commit type per branch prefix. feature→feat, fixbug→fix, hotfix→fix, common→chore.",
+  "commitTypeByBranchPrefix": {
+    "feature": "feat",
+    "fixbug": "fix",
+    "hotfix": "fix",
+    "common": "chore"
+  },
+
+  "_doc_mrTargetByBranchPrefix": "Default MR target per source prefix (env-flow). feature→dev, fixbug→qa, hotfix→uat, common→main.",
+  "mrTargetByBranchPrefix": {
+    "feature": "dev",
+    "fixbug": "qa",
+    "hotfix": "uat",
+    "common": "main"
+  },
+
+  "_doc_baseBranchByBranchType": "Base branch when running start-branch. feature→dev, fixbug→uat, hotfix→uat (env-flow defaults).",
+  "baseBranchByBranchType": {
+    "feature": "dev",
+    "fixbug": "uat",
+    "hotfix": "uat"
+  },
+
+  "_doc_semverBumpByCommitType": "Semver bump hint per commit type (MAJOR.MINOR.PATCH). feat→minor, fix→patch, refactor/style/test/docs/chore→none. Startup uses 0.x.x until production launch → 1.0.0.",
+  "semverBumpByCommitType": {
+    "feat": "minor",
+    "fix": "patch",
+    "refactor": "none",
+    "style": "none",
+    "test": "none",
+    "docs": "none",
+    "chore": "none",
+    "perf": "patch"
+  }
 }

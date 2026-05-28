@@ -1,14 +1,11 @@
 import { createBranchResolver } from '../core/branch-resolver.js';
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
-import type {
-  ArchitecturePreset,
-  Config,
-  FinishBranchOptions,
-  FinishBranchResult,
-  Logger,
-} from '../types.js';
+import type { Config, FinishBranchOptions, FinishBranchResult, Logger } from '../types.js';
+import { detectBranchPrefixKey, resolveMrTargetBranch } from '../utils/workflow-resolver.js';
 import { runCreateMrWorkflow } from './create-mr.js';
+
+type FinishBranchKind = 'feature' | 'fixbug' | 'release' | 'hotfix' | 'common' | 'other';
 
 export function runFinishBranchWorkflow({
   config,
@@ -28,9 +25,10 @@ export function runFinishBranchWorkflow({
   }
 
   const branch = options.branch ?? branches.resolve();
-  const branchType = detectBranchType(branch, config);
+  const branchType = detectFinishBranchType(branch, config);
   const { primaryTarget, additionalTargets } = resolveTargets({
     config,
+    branch,
     branchType,
     ...(options.target != null ? { explicitTarget: options.target } : {}),
   });
@@ -50,14 +48,10 @@ export function runFinishBranchWorkflow({
     return { status: 'dry-run', branch, targetBranch: primaryTarget, additionalTargets };
   }
 
-  // ── Push branch first ────────────────────────────────────────────────────
-
   logger.info(`Fetching and pushing '${branch}'...`);
   git.runOrThrow(['fetch', config.remote, branch]);
   branches.checkout(branch);
   git.runOrThrow(['push', '-u', config.remote, branch], { stdio: 'inherit' });
-
-  // ── Create primary MR ────────────────────────────────────────────────────
 
   if (!options.skipMr) {
     runCreateMrWorkflow({
@@ -66,12 +60,10 @@ export function runFinishBranchWorkflow({
       options: {
         source: branch,
         target: primaryTarget,
-        skipPush: true, // already pushed above
+        skipPush: true,
       },
     });
   }
-
-  // ── Remind about additional MR targets (gitflow release/hotfix) ──────────
 
   if (additionalTargets.length > 0) {
     logger.plain('');
@@ -80,64 +72,49 @@ export function runFinishBranchWorkflow({
     );
     logger.warn('After the primary MR is merged, run:');
     for (const extra of additionalTargets) {
-      logger.plain(`  git-create-mr --source ${branch} --target ${extra}`);
+      logger.plain(`  coolkit create-mr --source ${branch} --target ${extra}`);
     }
   }
 
   return { status: 'mr-created', branch, targetBranch: primaryTarget, additionalTargets };
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function detectBranchType(
-  branch: string,
-  config: Config,
-): 'feature' | 'release' | 'hotfix' | 'other' {
-  if (branch.startsWith(`${config.featureBranchPrefix}/`)) return 'feature';
-  if (branch.startsWith(`${config.releaseBranchPrefix}/`)) return 'release';
-  if (branch.startsWith(`${config.hotfixBranchPrefix}/`)) return 'hotfix';
+function detectFinishBranchType(branch: string, config: Config): FinishBranchKind {
+  const key = detectBranchPrefixKey(branch, config);
+  if (
+    key === 'feature' ||
+    key === 'fixbug' ||
+    key === 'release' ||
+    key === 'hotfix' ||
+    key === 'common'
+  ) {
+    return key;
+  }
   return 'other';
 }
 
 function resolveTargets({
   config,
+  branch,
   branchType,
   explicitTarget,
 }: {
   config: Config;
-  branchType: 'feature' | 'release' | 'hotfix' | 'other';
+  branch: string;
+  branchType: FinishBranchKind;
   explicitTarget?: string | null;
 }): { primaryTarget: string; additionalTargets: string[] } {
   if (explicitTarget) {
     return { primaryTarget: explicitTarget, additionalTargets: [] };
   }
 
-  const arch = config.architecture;
+  if (branchType !== 'other') {
+    return { primaryTarget: resolveMrTargetBranch(config, branch), additionalTargets: [] };
+  }
 
-  if (arch === 'gitflow') {
-    if (branchType === 'release' || branchType === 'hotfix') {
-      // release/hotfix: primary → main, additional → develop
-      return {
-        primaryTarget: config.mainBranch,
-        additionalTargets: [config.developBranch],
-      };
-    }
-    // feature → develop
+  if (config.architecture === 'gitflow') {
     return { primaryTarget: config.developBranch, additionalTargets: [] };
   }
 
-  // All other architectures: auto-resolve primary target
-  const primaryByArch: Record<ArchitecturePreset, keyof Config> = {
-    'feature-based': 'devBranch',
-    gitflow: 'developBranch',
-    'github-flow': 'mainBranch',
-    'gitlab-flow': 'mainBranch',
-    'trunk-based': 'mainBranch',
-    monorepo: 'mainBranch',
-  };
-
-  return {
-    primaryTarget: config[primaryByArch[arch]] as string,
-    additionalTargets: [],
-  };
+  return { primaryTarget: resolveMrTargetBranch(config, branch), additionalTargets: [] };
 }

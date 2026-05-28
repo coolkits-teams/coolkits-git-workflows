@@ -1,13 +1,22 @@
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
 import type {
-  ArchitecturePreset,
   BranchType,
   Config,
   Logger,
   StartBranchOptions,
   StartBranchResult,
 } from '../types.js';
+import {
+  buildCommitMessage,
+  buildStartBranchName,
+  slugifyNameSegment,
+} from '../utils/extract-labels.js';
+import {
+  resolveCommitTypeForBranch,
+  resolveMrTargetBranch,
+  resolveStartBaseBranch,
+} from '../utils/workflow-resolver.js';
 
 export function runStartBranchWorkflow({
   config,
@@ -36,20 +45,14 @@ export function runStartBranchWorkflow({
   });
   const shouldPush = options.push !== false;
 
-  // ── Fetch + validate base ────────────────────────────────────────────────
-
   logger.info(`Fetching '${config.remote}/${baseBranch}'...`);
   git.runOrThrow(['fetch', config.remote, baseBranch]);
 
   const baseRef = `${config.remote}/${baseBranch}`;
 
-  // ── Create branch ────────────────────────────────────────────────────────
-
   logger.info(`Creating '${branchName}' from '${baseRef}'...`);
   git.runOrThrow(['checkout', '-b', branchName, baseRef]);
   logger.ok(`Checked out new branch '${branchName}'.`);
-
-  // ── Push ─────────────────────────────────────────────────────────────────
 
   if (shouldPush) {
     logger.info(`Pushing '${branchName}' to ${config.remote}...`);
@@ -58,12 +61,10 @@ export function runStartBranchWorkflow({
   }
 
   logger.ok(`Ready to work on '${branchName}'.`);
-  printNextSteps({ config, type, logger });
+  printNextSteps({ config, type, branchName, options, logger });
 
   return { status: 'created', branch: branchName, basedOn: baseBranch };
 }
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function resolveBranchParams({
   config,
@@ -76,107 +77,56 @@ function resolveBranchParams({
   name: string;
   from?: string | null;
 }): { branchName: string; baseBranch: string } {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-zA-Z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-
-  const prefixMap: Record<BranchType, string> = {
-    feature: config.featureBranchPrefix,
-    release: config.releaseBranchPrefix,
-    hotfix: config.hotfixBranchPrefix,
-    fix: 'fix',
-    chore: 'chore',
-  };
-  const prefix = prefixMap[type];
-  const branchName = `${prefix}/${slug}`;
-
-  const baseBranch = from ?? resolveBaseBranch(config, type);
+  const branchName = buildStartBranchName(type, name, config);
+  const baseBranch = from ?? resolveStartBaseBranch(config, type);
 
   return { branchName, baseBranch };
-}
-
-function resolveBaseBranch(config: Config, type: BranchType): string {
-  const arch = config.architecture;
-
-  if (type === 'hotfix') {
-    // Hotfix always branches off the canonical production branch
-    const prodByArch: Record<ArchitecturePreset, keyof Config> = {
-      'feature-based': 'mainBranch',
-      gitflow: 'mainBranch',
-      'github-flow': 'mainBranch',
-      'gitlab-flow': 'mainBranch',
-      'trunk-based': 'mainBranch',
-      monorepo: 'mainBranch',
-    };
-    return config[prodByArch[arch]] as string;
-  }
-
-  if (type === 'release') {
-    // Release branches off integrate branch
-    const releaseBaseByArch: Record<ArchitecturePreset, keyof Config> = {
-      'feature-based': 'devBranch',
-      gitflow: 'developBranch',
-      'github-flow': 'mainBranch',
-      'gitlab-flow': 'mainBranch',
-      'trunk-based': 'mainBranch',
-      monorepo: 'mainBranch',
-    };
-    return config[releaseBaseByArch[arch]] as string;
-  }
-
-  // feature / fix / chore
-  const featureBaseByArch: Record<ArchitecturePreset, keyof Config> = {
-    'feature-based': 'devBranch',
-    gitflow: 'developBranch',
-    'github-flow': 'mainBranch',
-    'gitlab-flow': 'mainBranch',
-    'trunk-based': 'mainBranch',
-    monorepo: 'mainBranch',
-  };
-  return config[featureBaseByArch[arch]] as string;
 }
 
 function printNextSteps({
   config,
   type,
+  branchName,
+  options,
   logger,
 }: {
   config: Config;
   type: BranchType;
+  branchName: string;
+  options: StartBranchOptions;
   logger: Logger;
 }): void {
-  const arch = config.architecture;
+  const mrTarget = resolveMrTargetBranch(config, branchName);
+  const commitType = resolveCommitTypeForBranch(config, branchName);
+  const scope =
+    options.scope?.trim() !== '' && options.scope != null
+      ? options.scope
+      : slugifyNameSegment(options.name);
+  const ticketId =
+    options.ticketId?.trim() !== '' && options.ticketId != null ? options.ticketId : 'PROJ-000';
+  const bump = config.semverBumpByCommitType[commitType] ?? 'none';
 
   logger.plain('');
   logger.plain('Next steps:');
-
-  if (arch === 'feature-based') {
-    logger.plain(`  Develop your changes, then:`);
-    logger.plain(`  git-create-mr --target ${config.devBranch}          # dev build MR`);
-    logger.plain(`  git-extract-common                                   # common code MR → root`);
-    return;
+  logger.plain(`  Develop on '${branchName}', then:`);
+  logger.plain(`  coolkit create-mr --target ${mrTarget}`);
+  if (type === 'feature' && config.architecture === 'env-flow') {
+    logger.plain(
+      `  coolkit extract-common --desc <short-desc> --ticket ${ticketId}  # shared code → ${config.mainBranch}`,
+    );
+    logger.plain(`  coolkit sync-from-root  # pull ${config.mainBranch} into feature`);
   }
-
-  if (arch === 'gitflow') {
-    if (type === 'release' || type === 'hotfix') {
-      logger.plain(`  Stabilise the ${type}, then:`);
-      logger.plain(
-        `  git-finish-branch                                  # MR → ${config.mainBranch} + ${config.developBranch}`,
-      );
-    } else {
-      logger.plain(`  Develop your changes, then:`);
-      logger.plain(
-        `  git-finish-branch                                  # MR → ${config.developBranch}`,
-      );
-    }
-    return;
-  }
-
-  logger.plain(`  Develop your changes, then:`);
+  logger.plain('');
+  logger.plain('Suggested commit message format:');
   logger.plain(
-    `  git-create-mr                                          # MR → ${config.mainBranch}`,
+    `  ${buildCommitMessage(config, {
+      type: commitType,
+      scope,
+      ticketId,
+      description: 'short description',
+    })}`,
   );
-  logger.plain(`  # or: git-finish-branch`);
+  if (bump !== 'none') {
+    logger.plain(`  Semver hint for '${commitType}': bump ${bump} (MAJOR.MINOR.PATCH)`);
+  }
 }

@@ -7,11 +7,15 @@
  */
 export type ArchitecturePreset =
   | 'feature-based' // root+dev model — extract-common / sync-from-root
+  | 'env-flow' //      main/dev/qa/uat + feature/fixbug/hotfix/common
   | 'gitflow' //       main+develop+feature/release/hotfix
   | 'github-flow' //   main+feature/* — PR-based, short-lived
   | 'gitlab-flow' //   main+feature/*, env branches (staging/production)
   | 'trunk-based' //   main only + feature flags, very short branches
   | 'monorepo'; //     scope-aware feature/* branches → main
+
+/** Semver bump level for a commit type. */
+export type SemverBump = 'major' | 'minor' | 'patch' | 'none';
 
 // ─── Configuration ────────────────────────────────────────────────────────────
 
@@ -33,6 +37,16 @@ export interface Config {
   readonly stagingBranch: string;
   /** Production environment branch (gitlab-flow). */
   readonly productionBranch: string;
+  /** QA environment branch (env-flow). */
+  readonly qaBranch: string;
+  /** UAT / pre-production branch (env-flow). Hotfix branches base off this. */
+  readonly uatBranch: string;
+
+  /**
+   * Optional extra environment or long-lived branches (e.g. `"lts": "lts"`).
+   * Documented in config; wire into workflows via `baseBranchByBranchType` / `--from`.
+   */
+  readonly additionalBranches: Readonly<Record<string, string>>;
 
   // ── Branch prefixes ────────────────────────────────────────────────────────
 
@@ -42,6 +56,8 @@ export interface Config {
   readonly releaseBranchPrefix: string;
   /** Prefix for hotfix branches (gitflow). */
   readonly hotfixBranchPrefix: string;
+  /** Prefix for sprint fixbug branches (env-flow). */
+  readonly fixbugBranchPrefix: string;
   /** Prefix for generated common branches (feature-based). */
   readonly commonBranchPrefix: string;
   /** Prefix for safe MR branches created by git-create-mr --checkout. */
@@ -66,6 +82,96 @@ export interface Config {
   readonly mergeRequestProvider: 'gitlab' | 'github' | 'none';
   /** Strategy used when syncing root into the feature branch. */
   readonly syncStrategy: 'merge' | 'rebase';
+
+  // ── Message formats (template strings with {placeholder} tokens) ───────────
+
+  /**
+   * MR title for `create-mr` / `finish-branch` (direct push, no --checkout).
+   * Placeholders: {sourceBranch}, {targetBranch}, {mrBranch}, {timestamp}, {architecture}
+   */
+  readonly createMrTitleFormat: string;
+  /**
+   * MR title for `create-mr --checkout` (safe MR branch).
+   * Placeholders: same as createMrTitleFormat
+   */
+  readonly createMrTitleCheckoutFormat: string;
+  /**
+   * MR title for `extract-common`.
+   * Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}
+   */
+  readonly extractCommonMrTitleFormat: string;
+  /**
+   * Commit subject (first line) for `extract-common`.
+   * Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}
+   */
+  readonly extractCommonCommitSubjectFormat: string;
+  /**
+   * Suggested merge commit when merging common MR into root.
+   * Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}
+   */
+  readonly extractCommonRootMergeFormat: string;
+
+  // ── Branch name formats (template strings with {placeholder} tokens) ───────
+
+  /**
+   * Common branch name for `extract-common`.
+   * Placeholders: {commonBranchPrefix}, {featureBranch}, {featureSlug}, {timestamp}
+   */
+  readonly commonBranchFormat: string;
+  /**
+   * Safe MR branch for `create-mr --checkout`.
+   * Placeholders: {mrBranchPrefix}, {sourceBranch}, {sourceSlug}, {targetBranch}, {timestamp}
+   */
+  readonly mrBranchFormat: string;
+  /**
+   * Feature branch for `start-branch --type feature`.
+   * Placeholders: {featureBranchPrefix}, {name}, {nameSlug}
+   */
+  readonly featureBranchFormat: string;
+  /**
+   * Release branch for `start-branch --type release`.
+   * Placeholders: {releaseBranchPrefix}, {name}, {nameSlug}
+   */
+  readonly releaseBranchFormat: string;
+  /**
+   * Hotfix branch for `start-branch --type hotfix`.
+   * Placeholders: {hotfixBranchPrefix}, {name}, {nameSlug}
+   */
+  readonly hotfixBranchFormat: string;
+  /** Fix branch for `start-branch --type fix`. Placeholders: {name}, {nameSlug} */
+  readonly fixBranchFormat: string;
+  /** Chore branch for `start-branch --type chore`. Placeholders: {name}, {nameSlug} */
+  readonly choreBranchFormat: string;
+  /**
+   * Backup tag before `sync-from-root` merge.
+   * Placeholders: {branch}, {branchSlug}, {timestamp}
+   */
+  readonly syncBackupTagFormat: string;
+  /**
+   * Sprint fixbug branch for `start-branch --type fixbug`.
+   * Placeholders: {fixbugBranchPrefix}, {name}, {nameSlug}
+   */
+  readonly fixbugBranchFormat: string;
+
+  // ── Commit & versioning conventions ────────────────────────────────────────
+
+  /**
+   * Conventional commit subject template.
+   * Placeholders: {type}, {scope}, {ticketId}, {description}
+   * Default: `{type}({scope}) {ticketId}: {description}`
+   */
+  readonly commitMessageFormat: string;
+  /** Default commit type per branch prefix key (feature → feat, fixbug → fix, …). */
+  readonly commitTypeByBranchPrefix: Readonly<Partial<Record<string, string>>>;
+  /** Default MR target branch per source prefix key (feature → dev, fixbug → qa, …). */
+  readonly mrTargetByBranchPrefix: Readonly<Partial<Record<string, string>>>;
+  /** Override base branch per start-branch type (e.g. hotfix → uat). */
+  readonly baseBranchByBranchType: Readonly<Partial<Record<string, string>>>;
+  /**
+   * Semver bump hint per commit type (feat → minor, fix → patch, refactor → none, …).
+   * Used in CLI hints; bumping is manual unless you add automation later.
+   */
+  readonly semverBumpByCommitType: Readonly<Partial<Record<string, SemverBump>>>;
 }
 
 // ─── Git Client ───────────────────────────────────────────────────────────────
@@ -142,6 +248,12 @@ export interface MrProvider {
 
 export interface ExtractOptions {
   branch?: string | null;
+  /** Short description slug for common branch (e.g. fix-validator-null-check). */
+  desc?: string | null;
+  /** Jira/ticket id (e.g. PROJ-123). */
+  ticketId?: string | null;
+  scope?: string | null;
+  type?: string | null;
   dryRun?: boolean;
   skipMergeRequest?: boolean;
 }
@@ -167,7 +279,7 @@ export interface SyncResult {
 // create-mr
 
 /** Branch types recognised by start/finish-branch commands. */
-export type BranchType = 'feature' | 'release' | 'hotfix' | 'fix' | 'chore';
+export type BranchType = 'feature' | 'fixbug' | 'release' | 'hotfix' | 'fix' | 'chore';
 
 export interface CreateMrOptions {
   /** Source branch. Default: current branch. */
@@ -209,12 +321,16 @@ export interface CreateMrResult {
 export interface StartBranchOptions {
   /** Branch type. Default: 'feature'. */
   type?: BranchType;
-  /** Short name / slug appended after the prefix (e.g. "user-auth"). */
+  /** Short name / slug appended after the prefix (e.g. "contract-management"). */
   name: string;
   /** Override the auto-detected base branch. */
   from?: string | null;
   /** Push the new branch to remote immediately. Default: true. */
   push?: boolean;
+  /** Suggested ticket id for commit messages (e.g. PROJ-123). */
+  ticketId?: string | null;
+  /** Suggested commit scope (defaults to name slug). */
+  scope?: string | null;
 }
 
 export interface StartBranchResult {

@@ -2,14 +2,13 @@ import { createBranchResolver } from '../core/branch-resolver.js';
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
 import { createMrProvider } from '../providers/mr-provider.js';
-import type {
-  ArchitecturePreset,
-  Config,
-  CreateMrOptions,
-  CreateMrResult,
-  Logger,
-} from '../types.js';
-import { formatExtractTimestamp, slugifyBranchName } from '../utils/extract-labels.js';
+import type { Config, CreateMrOptions, CreateMrResult, Logger } from '../types.js';
+import {
+  buildCreateMrTitle,
+  buildMrBranchName,
+  formatExtractTimestamp,
+} from '../utils/extract-labels.js';
+import { resolveMrTargetBranch } from '../utils/workflow-resolver.js';
 
 export function runCreateMrWorkflow({
   config,
@@ -36,7 +35,7 @@ export function runCreateMrWorkflow({
   // ── Resolve source & target ──────────────────────────────────────────────
 
   const sourceBranch = options.source ?? branches.resolve();
-  const targetBranch = options.target ?? resolveDefaultTarget(config);
+  const targetBranch = options.target ?? resolveMrTargetBranch(config, sourceBranch);
 
   if (sourceBranch === targetBranch) {
     throw new Error(
@@ -72,7 +71,7 @@ export function runCreateMrWorkflow({
 
   const timestamp = formatExtractTimestamp(new Date());
   const mrBranch = options.checkout
-    ? `${config.mrBranchPrefix}/${slugifyBranchName(sourceBranch)}-${timestamp}`
+    ? buildMrBranchName(sourceBranch, targetBranch, timestamp, config)
     : sourceBranch;
 
   if (options.dryRun) {
@@ -139,7 +138,15 @@ export function runCreateMrWorkflow({
   const title =
     options.title != null && options.title.trim() !== ''
       ? options.title
-      : buildMrTitle(sourceBranch, targetBranch, mrBranch, options.checkout ?? false);
+      : buildCreateMrTitle({
+          sourceBranch,
+          targetBranch,
+          mrBranch,
+          timestamp,
+          architecture: config.architecture,
+          isCheckout: options.checkout ?? false,
+          config,
+        });
 
   const description = buildMrDescription(sourceBranch, targetBranch, mrBranch, config);
 
@@ -155,31 +162,6 @@ export function runCreateMrWorkflow({
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function resolveDefaultTarget(config: Config): string {
-  const targetByArch: Record<ArchitecturePreset, keyof Config> = {
-    'feature-based': 'devBranch',
-    gitflow: 'developBranch',
-    'github-flow': 'mainBranch',
-    'gitlab-flow': 'mainBranch',
-    'trunk-based': 'mainBranch',
-    monorepo: 'mainBranch',
-  };
-  const key = targetByArch[config.architecture];
-  return config[key] as string;
-}
-
-function buildMrTitle(
-  sourceBranch: string,
-  targetBranch: string,
-  mrBranch: string,
-  isCheckout: boolean,
-): string {
-  if (isCheckout && mrBranch !== sourceBranch) {
-    return `[${sourceBranch}] → ${targetBranch}`;
-  }
-  return `${sourceBranch} → ${targetBranch}`;
-}
 
 function buildMrDescription(
   sourceBranch: string,

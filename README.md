@@ -93,7 +93,7 @@ cp node_modules/@coolkits/git-workflows/git-controls.config.example.json git-con
 
 | Layer                         | Purpose                                                                                                                       |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 🏗️ **Architecture workflows** | Automate branch strategies - `feature-based`, `gitflow`, `github-flow`, `gitlab-flow`, `trunk-based`, `monorepo`              |
+| 🏗️ **Architecture workflows** | Automate branch strategies - `feature-based`, `env-flow`, `gitflow`, `github-flow`, `gitlab-flow`, `trunk-based`, `monorepo` |
 | 🛠️ **Git utilities**          | One-liner commands for everyday pain points: undo, squash, amend, cherry-pick, branch recovery, conflict resolution, and more |
 
 ---
@@ -113,6 +113,31 @@ coolkit create-mr             # Open MR: feature → dev (for CI build)
 coolkit start-branch user-auth        # Create feature/user-auth from dev
 coolkit finish-branch                 # Push + MR → dev
 ```
+
+### `env-flow` (main / dev / qa / uat)
+
+Team env promotion with `feature`, `fixbug`, `hotfix`, and `common` branches.
+
+| Branch | Role | MR target (default) |
+| ------ | ---- | ------------------- |
+| `main` | Source of truth | — |
+| `dev` | Feature integration | `feature/*` → **dev** |
+| `qa` | QA environment | `fixbug/*` → **qa** |
+| `uat` | UAT / pre-prod | `hotfix/*` → **uat** |
+| `common/*` | Shared code | → **main** |
+
+```bash
+# Copy config-examples/env-flow.json → git-controls.config.json
+coolkit start-branch contract-management --type feature --ticket PROJ-101
+coolkit start-branch contract-management --type fixbug --ticket PROJ-205
+coolkit start-branch login-crash-fix --type hotfix --from uat
+coolkit extract-common --desc fix-validator-null-check --ticket PROJ-88
+coolkit create-mr   # auto target from branch prefix
+```
+
+**Commit format:** `feat(scope) PROJ-123: short description` — configure via `commitMessageFormat`.
+
+**Semver hints:** `semverBumpByCommitType` (feat → minor, fix → patch). Versioning `0.x.x` until production launch → `1.0.0`.
 
 ### `gitflow`
 
@@ -283,6 +308,68 @@ Config files per architecture: [`config-examples/`](./config-examples/)
 | `protectedBranches`    | `[...]`         | Branches that cannot be used as feature/source            |
 | `mergeRequestProvider` | `gitlab`        | `gitlab` (glab CLI), `github` (gh CLI), `none` (URL only) |
 | `syncStrategy`         | `merge`         | `merge` or `rebase` for sync-from-root                    |
+
+### Message format templates
+
+Override auto-generated MR titles and commit messages with `{placeholder}` templates in `git-controls.config.json`.
+
+| Field                              | Default                                                                             | Used by                           |
+| ---------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------- |
+| `createMrTitleFormat`              | `{sourceBranch} → {targetBranch}`                                                   | `create-mr`, `finish-branch`      |
+| `createMrTitleCheckoutFormat`      | `[{sourceBranch}] → {targetBranch}`                                                 | `create-mr --checkout`            |
+| `extractCommonMrTitleFormat`       | `[{featureBranch}] common → {rootBranch} ({timestamp})`                             | `extract-common` MR               |
+| `extractCommonCommitSubjectFormat` | `common: extract from {featureBranch} ({timestamp})`                                | `extract-common` commit subject   |
+| `extractCommonRootMergeFormat`     | `common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})` | Suggested merge commit in MR body |
+
+**Placeholders for `create-mr`:** `{sourceBranch}`, `{targetBranch}`, `{mrBranch}`, `{timestamp}`, `{architecture}`
+
+**Placeholders for `extract-common`:** `{featureBranch}`, `{commonBranch}`, `{rootBranch}`, `{timestamp}`, `{fileCount}`
+
+Example — custom MR title for dev builds:
+
+```json
+{
+  "createMrTitleFormat": "[DEV] {sourceBranch} → {targetBranch}",
+  "createMrTitleCheckoutFormat": "[DEV][checkout] {sourceBranch} → {targetBranch}"
+}
+```
+
+Override per run with `--title "My custom title"` on `create-mr`.
+
+### Branch name format templates
+
+Override auto-generated branch names and backup tags with `{placeholder}` templates.
+
+| Field                 | Default                                          | Used by                       |
+| --------------------- | ------------------------------------------------ | ----------------------------- |
+| `commonBranchFormat`  | `{commonBranchPrefix}/{featureSlug}-{timestamp}` | `extract-common`              |
+| `mrBranchFormat`      | `{mrBranchPrefix}/{sourceSlug}-{timestamp}`      | `create-mr --checkout`        |
+| `featureBranchFormat` | `{featureBranchPrefix}/{nameSlug}`               | `start-branch --type feature` |
+| `releaseBranchFormat` | `{releaseBranchPrefix}/{nameSlug}`               | `start-branch --type release` |
+| `hotfixBranchFormat`  | `{hotfixBranchPrefix}/{nameSlug}`                | `start-branch --type hotfix`  |
+| `fixBranchFormat`     | `fix/{nameSlug}`                                 | `start-branch --type fix`     |
+| `choreBranchFormat`   | `chore/{nameSlug}`                               | `start-branch --type chore`   |
+| `syncBackupTagFormat` | `backup/{branchSlug}-{timestamp}`                | `sync-from-root` rollback tag |
+
+**`commonBranchFormat`:** `{commonBranchPrefix}`, `{featureBranch}`, `{featureSlug}`, `{timestamp}`
+
+**`mrBranchFormat`:** `{mrBranchPrefix}`, `{sourceBranch}`, `{sourceSlug}`, `{targetBranch}`, `{timestamp}`
+
+**`start-branch` formats:** `{featureBranchPrefix}`, `{releaseBranchPrefix}`, `{hotfixBranchPrefix}`, `{name}`, `{nameSlug}`
+
+**`syncBackupTagFormat`:** `{branch}`, `{branchSlug}`, `{timestamp}`
+
+Example — Jira-style feature branches:
+
+```json
+{
+  "featureBranchFormat": "{featureBranchPrefix}/PROJ-{nameSlug}",
+  "commonBranchFormat": "{commonBranchPrefix}/shared-{featureSlug}-{timestamp}",
+  "mrBranchFormat": "{mrBranchPrefix}/review-{sourceSlug}-{timestamp}"
+}
+```
+
+Branch **prefixes** (`featureBranchPrefix`, `commonBranchPrefix`, …) still work inside templates via `{featureBranchPrefix}` etc.
 
 ---
 
