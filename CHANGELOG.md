@@ -9,13 +9,40 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [Unreleased]
 
+---
+
+## [2.0.0] — 2026-05-27
+
+### Breaking
+
+- Removed `rootBranch` config. Common extract and sync use `mainBranch` only (default `main`).
+  Legacy configs with `rootBranch` are migrated automatically on load.
+- Renamed `extractCommonRootMergeFormat` → `extractCommonMainMergeFormat`; template placeholder
+  `{rootBranch}` → `{mainBranch}`.
+- `protectedBranches` defaults no longer include a `root` branch name.
+
+### Added
+
+- **`env-flow` architecture preset** — main / dev / qa / uat promotion with `feature`,
+  `fixbug`, `hotfix`, and `common` branches; `config-examples/env-flow.json`.
+- **`coolkit` CLI** — single entry point (`coolkit <command>`) for all workflows and utilities.
+- **Configurable message templates** — `createMrTitleFormat`, `extractCommonMrTitleFormat`,
+  `extractCommonCommitSubjectFormat`, `extractCommonMainMergeFormat`, and related fields
+  with `{placeholder}` substitution.
+- **Configurable branch name templates** — `commonBranchFormat`, `mrBranchFormat`,
+  `featureBranchFormat`, `fixbugBranchFormat`, `syncBackupTagFormat`, and related fields.
+- **Conventional Commits & semver hints** — `commitMessageFormat`, `commitTypeByBranchPrefix`,
+  `mrTargetByBranchPrefix`, `baseBranchByBranchType`, `semverBumpByCommitType`.
+- **`fixbug` branch type** — `start-branch --type fixbug`, `fixbugBranchPrefix`, env-flow MR
+  routing to `qa`.
+- **`extract-common` flags** — `--desc`, `--ticket`, `--scope`, `--type` for slug and commit
+  message customization.
+
 ### Changed
 
-- **Breaking:** Removed `rootBranch` config. Common extract and sync use `mainBranch` only
-  (default `main`). Legacy configs with `rootBranch` are migrated automatically on load.
-- Renamed `extractCommonRootMergeFormat` → `extractCommonMainMergeFormat`; placeholder
-  `{rootBranch}` → `{mainBranch}`.
 - CLI: prefer `coolkit sync-from-main`; `sync-from-root` remains as a deprecated alias.
+
+[2.0.0]: https://github.com/coolkits-teams/coolkits-git-workflows/releases/tag/v2.0.0
 
 ---
 
