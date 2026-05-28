@@ -49,22 +49,22 @@ export function runExtractCommonWorkflow({
   branches.checkout(featureBranch);
   logger.ok(`Checked out '${featureBranch}'.`);
 
-  const rootRef = `${config.remote}/${config.rootBranch}`;
+  const mainRef = `${config.remote}/${config.mainBranch}`;
 
-  logger.info(`Fetching ${rootRef}...`);
-  git.runOrThrow(['fetch', config.remote, config.rootBranch]);
+  logger.info(`Fetching ${mainRef}...`);
+  git.runOrThrow(['fetch', config.remote, config.mainBranch]);
 
-  const mergeBase = git.runOrThrow(['merge-base', rootRef, 'HEAD']).trim();
-  const rootTip = git.runOrThrow(['rev-parse', rootRef]).trim();
+  const mergeBase = git.runOrThrow(['merge-base', mainRef, 'HEAD']).trim();
+  const mainTip = git.runOrThrow(['rev-parse', mainRef]).trim();
 
-  if (mergeBase !== rootTip) {
-    const behind = git.runOrThrow(['rev-list', '--count', `HEAD..${rootRef}`]).trim();
+  if (mergeBase !== mainTip) {
+    const behind = git.runOrThrow(['rev-list', '--count', `HEAD..${mainRef}`]).trim();
     throw new Error(
       [
-        `Feature branch is ${behind} commit(s) behind '${rootRef}'.`,
+        `Feature branch is ${behind} commit(s) behind '${mainRef}'.`,
         'Sync first, then retry:',
         `  git checkout ${featureBranch}`,
-        `  git merge ${rootRef}`,
+        `  coolkit sync-from-main`,
         '  git push',
       ].join('\n'),
     );
@@ -119,7 +119,7 @@ export function runExtractCommonWorkflow({
   logger.info(`Target common branch: ${commonBranch}`);
 
   if (options.dryRun) {
-    logger.ok(`[DRY-RUN] Would create '${commonBranch}' from '${rootRef}' and apply the patch.`);
+    logger.ok(`[DRY-RUN] Would create '${commonBranch}' from '${mainRef}' and apply the patch.`);
     return { status: 'extracted', commonBranch, files: changedFiles };
   }
 
@@ -142,7 +142,7 @@ export function runExtractCommonWorkflow({
 
   try {
     logger.info(`Creating worktree at: ${worktreeDir}`);
-    git.runOrThrow(['worktree', 'add', '-b', commonBranch, worktreeDir, rootRef]);
+    git.runOrThrow(['worktree', 'add', '-b', commonBranch, worktreeDir, mainRef]);
 
     logger.info('Applying patch...');
     const applyResult = git.run(['apply', '--3way', '--whitespace=nowarn', patchFile], {
@@ -170,7 +170,7 @@ export function runExtractCommonWorkflow({
       timestamp,
       changedFiles,
       mergeBase,
-      rootBranch: config.rootBranch,
+      mainBranch: config.mainBranch,
       config,
       commitVars,
     });
@@ -191,13 +191,13 @@ export function runExtractCommonWorkflow({
     logger.ok(`Pushed: ${config.remote}/${commonBranch}`);
 
     if (options.skipMergeRequest === true || config.mergeRequestProvider === 'none') {
-      const url = provider.buildMergeRequestUrl(commonBranch, config.rootBranch);
+      const url = provider.buildMergeRequestUrl(commonBranch, config.mainBranch);
       logger.warn('Merge request creation skipped. URL:');
       logger.plain(`  ${url}`);
     } else {
       provider.createMergeRequest({
         sourceBranch: commonBranch,
-        targetBranch: config.rootBranch,
+        targetBranch: config.mainBranch,
         title: buildMergeRequestTitle(
           featureBranch,
           timestamp,
@@ -210,7 +210,7 @@ export function runExtractCommonWorkflow({
           commonBranch,
           changedFiles,
           mergeBase,
-          rootBranch: config.rootBranch,
+          mainBranch: config.mainBranch,
           config,
         }),
         cwd: worktreeDir,

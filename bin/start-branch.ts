@@ -38,7 +38,7 @@ Options:
 
 Architecture defaults:
   env-flow       feature/* from dev | fixbug/* from uat → MR qa | hotfix/* from uat
-  feature-based  feature/* from dev | common/* → root
+  feature-based  feature/* from dev | common/* → main
   gitflow        feature/* from develop | hotfix/* from main
 
 Examples:

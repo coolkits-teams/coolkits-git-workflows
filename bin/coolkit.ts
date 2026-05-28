@@ -14,6 +14,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const COMMANDS: Record<string, string> = {
   'extract-common': 'extract-common.js',
+  'sync-from-main': 'sync-from-root.js',
   'sync-from-root': 'sync-from-root.js',
   'create-mr': 'create-mr.js',
   'start-branch': 'start-branch.js',
@@ -44,8 +45,8 @@ Usage:
   coolkit <command> [options]
 
 Commands:
-  extract-common   Extract shared code → common branch → MR to root
-  sync-from-root   Sync root branch into current feature branch
+  extract-common   Extract shared code → common branch → MR to main
+  sync-from-main   Sync main into current feature branch (alias: sync-from-root)
   create-mr        Create merge/pull request between branches
   start-branch     Create a new feature/release/hotfix branch
   finish-branch    Push branch and open MR(s)

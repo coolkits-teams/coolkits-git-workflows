@@ -7,7 +7,6 @@
   "devBranch": "dev",
   "qaBranch": "qa",
   "uatBranch": "uat",
-  "rootBranch": "main",
 
   "featureBranchPrefix": "feature",
   "fixbugBranchPrefix": "fixbug",
@@ -50,8 +49,8 @@
   },
 
   "extractCommonCommitSubjectFormat": "{type}({scope}) {ticketId}: {description}",
-  "extractCommonMrTitleFormat": "[common] {descSlug} → {rootBranch}",
-  "extractCommonRootMergeFormat": "chore(common): merge {descSlug} from {featureBranch} ({commonBranch} → {rootBranch})",
+  "extractCommonMrTitleFormat": "[common] {descSlug} → {mainBranch}",
+  "extractCommonMainMergeFormat": "chore(common): merge {descSlug} from {featureBranch} ({commonBranch} → {mainBranch})",
 
   "createMrTitleFormat": "[{sourceBranch}] → {targetBranch}",
   "createMrTitleCheckoutFormat": "[checkout] {sourceBranch} → {targetBranch}",

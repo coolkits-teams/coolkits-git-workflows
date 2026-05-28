@@ -30,26 +30,26 @@ export function runSyncFromRootWorkflow({
   logger.info(`Feature branch: ${featureBranch}`);
   branches.checkout(featureBranch);
 
-  const rootRef = `${config.remote}/${config.rootBranch}`;
+  const mainRef = `${config.remote}/${config.mainBranch}`;
 
-  logger.info(`Fetching ${rootRef}...`);
-  git.runOrThrow(['fetch', config.remote, config.rootBranch]);
+  logger.info(`Fetching ${mainRef}...`);
+  git.runOrThrow(['fetch', config.remote, config.mainBranch]);
 
-  const behind = Number(git.runOrThrow(['rev-list', '--count', `HEAD..${rootRef}`]).trim());
-  const ahead = Number(git.runOrThrow(['rev-list', '--count', `${rootRef}..HEAD`]).trim());
+  const behind = Number(git.runOrThrow(['rev-list', '--count', `HEAD..${mainRef}`]).trim());
+  const ahead = Number(git.runOrThrow(['rev-list', '--count', `${mainRef}..HEAD`]).trim());
 
   logger.info(
-    `Branch status vs ${rootRef}: ahead=${ahead.toString()}, behind=${behind.toString()}`,
+    `Branch status vs ${mainRef}: ahead=${ahead.toString()}, behind=${behind.toString()}`,
   );
 
   if (behind === 0) {
-    logger.ok(`'${featureBranch}' is already up to date with '${rootRef}'.`);
+    logger.ok(`'${featureBranch}' is already up to date with '${mainRef}'.`);
     return { status: 'up-to-date' };
   }
 
-  logger.info(`${behind.toString()} commit(s) from '${rootRef}' will be merged:`);
+  logger.info(`${behind.toString()} commit(s) from '${mainRef}' will be merged:`);
   git
-    .run(['log', '--oneline', '--no-decorate', `HEAD..${rootRef}`])
+    .run(['log', '--oneline', '--no-decorate', `HEAD..${mainRef}`])
     .stdout.split('\n')
     .filter(Boolean)
     .forEach((commit) => {
@@ -60,8 +60,8 @@ export function runSyncFromRootWorkflow({
   logger.info(`Backup tag created: ${backupTag}`);
   logger.info(`Rollback command:   git reset --hard ${backupTag}`);
 
-  logger.info(`Merging '${rootRef}' into '${featureBranch}'...`);
-  const mergeResult = git.run(['merge', '--no-edit', rootRef], { stdio: 'inherit' });
+  logger.info(`Merging '${mainRef}' into '${featureBranch}'...`);
+  const mergeResult = git.run(['merge', '--no-edit', mainRef], { stdio: 'inherit' });
 
   if (!mergeResult.ok) {
     throw new Error(

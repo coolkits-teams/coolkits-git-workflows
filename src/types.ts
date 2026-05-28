@@ -6,7 +6,7 @@
  * git-controls.config.json always win over the preset.
  */
 export type ArchitecturePreset =
-  | 'feature-based' // root+dev model — extract-common / sync-from-root
+  | 'feature-based' // main+dev model — extract-common / sync-from-main
   | 'env-flow' //      main/dev/qa/uat + feature/fixbug/hotfix/common
   | 'gitflow' //       main+develop+feature/release/hotfix
   | 'github-flow' //   main+feature/* — PR-based, short-lived
@@ -25,13 +25,11 @@ export interface Config {
 
   // ── Branch names (all override the chosen preset's defaults) ──────────────
 
-  /** Canonical production branch (main/master). */
+  /** Canonical production / source-of-truth branch. extract-common MRs target this. */
   readonly mainBranch: string;
   /** Integration branch for in-progress work. Gitflow: develop. */
   readonly developBranch: string;
-  /** Common-source branch for feature-based. extract-common MRs target this. */
-  readonly rootBranch: string;
-  /** Dev-build integration branch for feature-based. */
+  /** Dev-build integration branch (feature-based / env-flow). */
   readonly devBranch: string;
   /** Staging environment branch (gitlab-flow). */
   readonly stagingBranch: string;
@@ -80,7 +78,7 @@ export interface Config {
   readonly protectedBranches: string[];
   /** MR/PR provider. 'gitlab' → glab CLI, 'github' → gh CLI, 'none' → URL only. */
   readonly mergeRequestProvider: 'gitlab' | 'github' | 'none';
-  /** Strategy used when syncing root into the feature branch. */
+  /** Strategy used when syncing main into the feature branch (sync-from-main). */
   readonly syncStrategy: 'merge' | 'rebase';
 
   // ── Message formats (template strings with {placeholder} tokens) ───────────
@@ -97,19 +95,19 @@ export interface Config {
   readonly createMrTitleCheckoutFormat: string;
   /**
    * MR title for `extract-common`.
-   * Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}
+   * Placeholders: {featureBranch}, {commonBranch}, {mainBranch}, {timestamp}, {fileCount}
    */
   readonly extractCommonMrTitleFormat: string;
   /**
    * Commit subject (first line) for `extract-common`.
-   * Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}
+   * Placeholders: {featureBranch}, {commonBranch}, {mainBranch}, {timestamp}, {fileCount}
    */
   readonly extractCommonCommitSubjectFormat: string;
   /**
-   * Suggested merge commit when merging common MR into root.
-   * Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}
+   * Suggested merge commit when merging common MR into main.
+   * Placeholders: {featureBranch}, {commonBranch}, {mainBranch}, {timestamp}, {fileCount}
    */
-  readonly extractCommonRootMergeFormat: string;
+  readonly extractCommonMainMergeFormat: string;
 
   // ── Branch name formats (template strings with {placeholder} tokens) ───────
 
@@ -143,7 +141,7 @@ export interface Config {
   /** Chore branch for `start-branch --type chore`. Placeholders: {name}, {nameSlug} */
   readonly choreBranchFormat: string;
   /**
-   * Backup tag before `sync-from-root` merge.
+   * Backup tag before `sync-from-main` merge.
    * Placeholders: {branch}, {branchSlug}, {timestamp}
    */
   readonly syncBackupTagFormat: string;
@@ -264,7 +262,7 @@ export interface ExtractResult {
   files?: string[];
 }
 
-// sync-from-root
+// sync-from-main (workflow file: sync-from-root.ts)
 
 export interface SyncOptions {
   branch?: string | null;

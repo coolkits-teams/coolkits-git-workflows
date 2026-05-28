@@ -1,6 +1,6 @@
 /**
  * CLI entry point: extract common changes into a dedicated branch and open a
- * merge request against the integration (root) branch.
+ * merge request against main.
  *
  * Usage (after `npm install -g @coolkits/git-workflows`):
  *   git-extract-common

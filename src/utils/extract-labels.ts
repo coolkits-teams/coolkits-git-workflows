@@ -137,7 +137,7 @@ export function buildSyncBackupTag(
 export function buildExtractCommitSubject(
   featureBranch: string,
   timestamp: string,
-  config: Pick<Config, 'extractCommonCommitSubjectFormat' | 'commitMessageFormat' | 'rootBranch'>,
+  config: Pick<Config, 'extractCommonCommitSubjectFormat' | 'commitMessageFormat' | 'mainBranch'>,
   commonBranch = '',
   fileCount = 0,
   commitVars?: {
@@ -167,7 +167,7 @@ export function buildExtractCommitSubject(
   return applyMessageTemplate(config.extractCommonCommitSubjectFormat, {
     featureBranch,
     commonBranch,
-    rootBranch: config.rootBranch,
+    mainBranch: config.mainBranch,
     timestamp,
     fileCount,
     descSlug: commonBranch.split('/').pop() ?? featureBranch,
@@ -177,30 +177,30 @@ export function buildExtractCommitSubject(
 export function buildMergeRequestTitle(
   featureBranch: string,
   timestamp: string,
-  config: Pick<Config, 'extractCommonMrTitleFormat' | 'rootBranch'>,
+  config: Pick<Config, 'extractCommonMrTitleFormat' | 'mainBranch'>,
   commonBranch = '',
   fileCount = 0,
 ): string {
   return applyMessageTemplate(config.extractCommonMrTitleFormat, {
     featureBranch,
     commonBranch,
-    rootBranch: config.rootBranch,
+    mainBranch: config.mainBranch,
     timestamp,
     fileCount,
   });
 }
 
-export function buildSuggestedRootMergeMessage(
+export function buildSuggestedMainMergeMessage(
   featureBranch: string,
   commonBranch: string,
-  config: Pick<Config, 'extractCommonRootMergeFormat' | 'rootBranch'>,
+  config: Pick<Config, 'extractCommonMainMergeFormat' | 'mainBranch'>,
   timestamp = '',
   fileCount = 0,
 ): string {
-  return applyMessageTemplate(config.extractCommonRootMergeFormat, {
+  return applyMessageTemplate(config.extractCommonMainMergeFormat, {
     featureBranch,
     commonBranch,
-    rootBranch: config.rootBranch,
+    mainBranch: config.mainBranch,
     timestamp,
     fileCount,
   });
@@ -243,7 +243,7 @@ export function buildExtractCommitMessage({
   timestamp,
   changedFiles,
   mergeBase,
-  rootBranch,
+  mainBranch,
   config,
   commitVars,
 }: {
@@ -252,13 +252,13 @@ export function buildExtractCommitMessage({
   timestamp: string;
   changedFiles: string[];
   mergeBase: string;
-  rootBranch: string;
+  mainBranch: string;
   config: Pick<
     Config,
     | 'extractCommonCommitSubjectFormat'
-    | 'extractCommonRootMergeFormat'
+    | 'extractCommonMainMergeFormat'
     | 'commitMessageFormat'
-    | 'rootBranch'
+    | 'mainBranch'
   >;
   commitVars?: {
     type?: string | null;
@@ -276,7 +276,7 @@ export function buildExtractCommitMessage({
     fileCount,
     commitVars,
   );
-  const suggestedMerge = buildSuggestedRootMergeMessage(
+  const suggestedMerge = buildSuggestedMainMergeMessage(
     featureBranch,
     commonBranch,
     config,
@@ -290,11 +290,11 @@ export function buildExtractCommitMessage({
     'Auto-extracted by @coolkits/git-workflows (extract-common workflow).',
     `Feature branch: ${featureBranch}`,
     `Common branch:  ${commonBranch}`,
-    `Merge target:   ${rootBranch}`,
+    `Merge target:   ${mainBranch}`,
     `Files changed:  ${fileCount.toString()}`,
     `Merge-base:     ${mergeBase}`,
     '',
-    `Suggested merge commit when merging into ${rootBranch}:`,
+    `Suggested merge commit when merging into ${mainBranch}:`,
     suggestedMerge,
   ].join('\n');
 }
@@ -304,29 +304,29 @@ export function buildMergeRequestDescription({
   commonBranch,
   changedFiles,
   mergeBase,
-  rootBranch,
+  mainBranch,
   config,
 }: {
   featureBranch: string;
   commonBranch: string;
   changedFiles: string[];
   mergeBase: string;
-  rootBranch: string;
-  config: Pick<Config, 'extractCommonRootMergeFormat' | 'rootBranch'>;
+  mainBranch: string;
+  config: Pick<Config, 'extractCommonMainMergeFormat' | 'mainBranch'>;
 }): string {
   return [
     `Auto-extracted common changes from \`${featureBranch}\`.`,
     '',
     `**Feature branch:** \`${featureBranch}\``,
     `**Common branch:** \`${commonBranch}\``,
-    `**Merge target:** \`${rootBranch}\``,
+    `**Merge target:** \`${mainBranch}\``,
     `**Files changed:** ${changedFiles.length.toString()}`,
     `**Merge-base:** \`${mergeBase}\``,
     '',
-    `When merging this MR into \`${rootBranch}\`, keep the feature branch in the merge commit message:`,
+    `When merging this MR into \`${mainBranch}\`, keep the feature branch in the merge commit message:`,
     '',
     '```',
-    buildSuggestedRootMergeMessage(featureBranch, commonBranch, config),
+    buildSuggestedMainMergeMessage(featureBranch, commonBranch, config),
     '```',
     '',
     '<details><summary>File list</summary>',

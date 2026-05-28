@@ -21,11 +21,11 @@
 
   "createMrTitleCheckoutFormat": "[{sourceBranch}] → {targetBranch}",
 
-  "extractCommonMrTitleFormat": "[{featureBranch}] common → {rootBranch} ({timestamp})",
+  "extractCommonMrTitleFormat": "[{featureBranch}] common → {mainBranch} ({timestamp})",
 
   "extractCommonCommitSubjectFormat": "common: extract from {featureBranch} ({timestamp})",
 
-  "extractCommonRootMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})",
+  "extractCommonMainMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {mainBranch})",
 
   "commonBranchFormat": "{commonBranchPrefix}/{featureSlug}-{timestamp}",
 

@@ -1,15 +1,12 @@
 /**
- * CLI entry point: merge the integration (root) branch into the current feature branch.
+ * CLI entry point: merge main into the current feature branch.
  *
- * Usage (after `npm install -g @coolkits/git-workflows`):
- *   git-sync-from-root
- *   git-sync-from-root --branch feature/product
- *   git-sync-from-root --no-push
- *   git-sync-from-root --debug
- *   git-sync-from-root --help
+ * Usage:
+ *   coolkit sync-from-main
+ *   coolkit sync-from-main --branch feature/product
+ *   coolkit sync-from-main --no-push
  *
- * Usage (via npx, no install needed):
- *   npx @coolkits/git-workflows git-sync-from-root
+ * Alias: coolkit sync-from-root (deprecated)
  */
 
 import { loadConfig } from '../src/config/load-config.js';
@@ -19,7 +16,7 @@ import { createLogger } from '../src/utils/logger.js';
 import { runSyncFromRootWorkflow } from '../src/workflows/sync-from-root.js';
 
 const HELP_TEXT = `
-Usage: git-sync-from-root [options]
+Usage: coolkit sync-from-main [options]
 
 Options:
   --branch <name>   Target branch. Defaults to the current branch.

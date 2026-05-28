@@ -8,13 +8,13 @@ import {
   buildMergeRequestTitle,
   buildMrBranchName,
   buildStartBranchName,
-  buildSuggestedRootMergeMessage,
+  buildSuggestedMainMergeMessage,
   buildSyncBackupTag,
   slugifyBranchName,
 } from './extract-labels.ts';
 import { DEFAULT_CONFIG } from '../config/default-config.ts';
 
-const formatConfig = { ...DEFAULT_CONFIG, rootBranch: 'root' };
+const formatConfig = { ...DEFAULT_CONFIG };
 
 describe('slugifyBranchName', () => {
   it('preserves feature prefix in branch slug', () => {
@@ -71,18 +71,18 @@ describe('extract labels', () => {
   it('builds MR title with feature branch prefix', () => {
     assert.equal(
       buildMergeRequestTitle('feature/example', '202605260220', formatConfig),
-      '[feature/example] common → root (202605260220)',
+      '[feature/example] common → main (202605260220)',
     );
   });
 
-  it('builds suggested root merge message with feature branch', () => {
+  it('builds suggested main merge message with feature branch', () => {
     assert.equal(
-      buildSuggestedRootMergeMessage(
+      buildSuggestedMainMergeMessage(
         'feature/example',
         'common/feature-example-202605260220',
         formatConfig,
       ),
-      'common: merge shared changes from feature/example (common/feature-example-202605260220 → root)',
+      'common: merge shared changes from feature/example (common/feature-example-202605260220 → main)',
     );
   });
 

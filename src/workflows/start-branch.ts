@@ -114,7 +114,7 @@ function printNextSteps({
     logger.plain(
       `  coolkit extract-common --desc <short-desc> --ticket ${ticketId}  # shared code → ${config.mainBranch}`,
     );
-    logger.plain(`  coolkit sync-from-root  # pull ${config.mainBranch} into feature`);
+    logger.plain(`  coolkit sync-from-main  # pull ${config.mainBranch} into feature`);
   }
   logger.plain('');
   logger.plain('Suggested commit message format:');

@@ -12,9 +12,6 @@
   "_doc_developBranch": "Integration branch for in-progress work. gitflow: 'develop'. github-flow / gitlab-flow / trunk: same as mainBranch. Default: 'develop'.",
   "developBranch": "develop",
 
-  "_doc_rootBranch": "Common/shared-source integration branch (feature-based only). git-extract-common opens MRs into this branch. git-sync-from-root merges this into your feature branch. Default: 'root'.",
-  "rootBranch": "root",
-
   "_doc_devBranch": "Dev-build integration branch (feature-based only). Feature branches open MRs here to trigger dev environment CI builds. Default: 'dev'.",
   "devBranch": "dev",
 
@@ -70,12 +67,12 @@
   "remote": "origin",
 
   "_doc_protectedBranches": "Branches the CLI refuses to use as a source/feature branch. Prevents accidental destructive operations on integration branches.",
-  "protectedBranches": ["root", "dev", "main", "master", "develop", "staging", "production"],
+  "protectedBranches": ["dev", "main", "master", "develop", "staging", "production"],
 
   "_doc_mergeRequestProvider": "MR/PR provider used by all commands that open merge requests. 'gitlab' → glab CLI. 'github' → gh CLI. 'none' → prints browser URL only. Default: 'gitlab'.",
   "mergeRequestProvider": "gitlab",
 
-  "_doc_syncStrategy": "Sync strategy used by git-sync-from-root. 'merge' creates a merge commit (safer, preserves history context). 'rebase' replays your commits on top of root (linear history, requires force-push). Default: 'merge'.",
+  "_doc_syncStrategy": "Sync strategy used by coolkit sync-from-main. 'merge' creates a merge commit (safer, preserves history context). 'rebase' replays your commits on top of main (linear history, requires force-push). Default: 'merge'.",
   "syncStrategy": "merge",
 
   "_doc_messageFormats": "Template strings for auto-generated MR titles and commit messages. Use {placeholder} tokens — values are substituted at runtime. Unknown tokens are left as-is.",
@@ -86,14 +83,14 @@
   "_doc_createMrTitleCheckoutFormat": "MR title for create-mr --checkout (safe MR branch). Same placeholders as createMrTitleFormat. Default: '[{sourceBranch}] → {targetBranch}'.",
   "createMrTitleCheckoutFormat": "[{sourceBranch}] → {targetBranch}",
 
-  "_doc_extractCommonMrTitleFormat": "MR title for extract-common. Placeholders: {featureBranch}, {commonBranch}, {rootBranch}, {timestamp}, {fileCount}. Default: '[{featureBranch}] common → {rootBranch} ({timestamp})'.",
-  "extractCommonMrTitleFormat": "[{featureBranch}] common → {rootBranch} ({timestamp})",
+  "_doc_extractCommonMrTitleFormat": "MR title for extract-common. Placeholders: {featureBranch}, {commonBranch}, {mainBranch}, {timestamp}, {fileCount}. Default: '[{featureBranch}] common → {mainBranch} ({timestamp})'.",
+  "extractCommonMrTitleFormat": "[{featureBranch}] common → {mainBranch} ({timestamp})",
 
   "_doc_extractCommonCommitSubjectFormat": "Commit subject (first line) for extract-common. Same placeholders as extractCommonMrTitleFormat. Default: 'common: extract from {featureBranch} ({timestamp})'.",
   "extractCommonCommitSubjectFormat": "common: extract from {featureBranch} ({timestamp})",
 
-  "_doc_extractCommonRootMergeFormat": "Suggested merge commit when merging common MR into root. Same placeholders. Default: 'common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})'.",
-  "extractCommonRootMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})",
+  "_doc_extractCommonMainMergeFormat": "Suggested merge commit when merging common MR into main. Same placeholders. Default: 'common: merge shared changes from {featureBranch} ({commonBranch} → {mainBranch})'.",
+  "extractCommonMainMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {mainBranch})",
 
   "_doc_branchFormats": "Template strings for auto-generated branch names and backup tags. Use {placeholder} tokens.",
 
@@ -118,7 +115,7 @@
   "_doc_choreBranchFormat": "Chore branch from start-branch --type chore. Placeholders: {name}, {nameSlug}. Default: 'chore/{nameSlug}'.",
   "choreBranchFormat": "chore/{nameSlug}",
 
-  "_doc_syncBackupTagFormat": "Backup tag before sync-from-root merge. Placeholders: {branch}, {branchSlug}, {timestamp}. Default: 'backup/{branchSlug}-{timestamp}'.",
+  "_doc_syncBackupTagFormat": "Backup tag before sync-from-main merge. Placeholders: {branch}, {branchSlug}, {timestamp}. Default: 'backup/{branchSlug}-{timestamp}'.",
   "syncBackupTagFormat": "backup/{branchSlug}-{timestamp}",
 
   "_doc_fixbugBranchFormat": "fixbug branch from start-branch --type fixbug. Default: '{fixbugBranchPrefix}/{nameSlug}'.",

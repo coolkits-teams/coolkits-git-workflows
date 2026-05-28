@@ -9,7 +9,6 @@ export const DEFAULT_CONFIG: Readonly<Config> = Object.freeze({
 
   mainBranch: 'main',
   developBranch: 'develop',
-  rootBranch: 'root',
   devBranch: 'dev',
   stagingBranch: 'staging',
   productionBranch: 'production',
@@ -29,26 +28,16 @@ export const DEFAULT_CONFIG: Readonly<Config> = Object.freeze({
   commonExcludeFiles: [],
 
   remote: 'origin',
-  protectedBranches: [
-    'root',
-    'dev',
-    'qa',
-    'uat',
-    'main',
-    'master',
-    'develop',
-    'staging',
-    'production',
-  ],
+  protectedBranches: ['dev', 'qa', 'uat', 'main', 'master', 'develop', 'staging', 'production'],
   mergeRequestProvider: 'gitlab',
   syncStrategy: 'merge',
 
   createMrTitleFormat: '{sourceBranch} → {targetBranch}',
   createMrTitleCheckoutFormat: '[{sourceBranch}] → {targetBranch}',
-  extractCommonMrTitleFormat: '[{featureBranch}] common → {rootBranch} ({timestamp})',
+  extractCommonMrTitleFormat: '[{featureBranch}] common → {mainBranch} ({timestamp})',
   extractCommonCommitSubjectFormat: 'common: extract from {featureBranch} ({timestamp})',
-  extractCommonRootMergeFormat:
-    'common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})',
+  extractCommonMainMergeFormat:
+    'common: merge shared changes from {featureBranch} ({commonBranch} → {mainBranch})',
 
   commonBranchFormat: '{commonBranchPrefix}/{featureSlug}-{timestamp}',
   mrBranchFormat: '{mrBranchPrefix}/{sourceSlug}-{timestamp}',

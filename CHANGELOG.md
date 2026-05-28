@@ -7,6 +7,18 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [Unreleased]
+
+### Changed
+
+- **Breaking:** Removed `rootBranch` config. Common extract and sync use `mainBranch` only
+  (default `main`). Legacy configs with `rootBranch` are migrated automatically on load.
+- Renamed `extractCommonRootMergeFormat` → `extractCommonMainMergeFormat`; placeholder
+  `{rootBranch}` → `{mainBranch}`.
+- CLI: prefer `coolkit sync-from-main`; `sync-from-root` remains as a deprecated alias.
+
+---
+
 ## [1.2.0] — 2026-05-26
 
 ### Added

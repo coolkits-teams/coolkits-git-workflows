@@ -17,7 +17,7 @@ type PresetDefaults = Omit<
   | 'createMrTitleCheckoutFormat'
   | 'extractCommonMrTitleFormat'
   | 'extractCommonCommitSubjectFormat'
-  | 'extractCommonRootMergeFormat'
+  | 'extractCommonMainMergeFormat'
   | 'commonBranchFormat'
   | 'mrBranchFormat'
   | 'featureBranchFormat'
@@ -41,17 +41,16 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
    * Feature-based architecture (default).
    *
    * Branch roles:
-   *   root        — canonical common/shared source; extract-common MRs target here
+   *   main        — source of truth; extract-common MRs target here
    *   dev         — dev-build integration; feature MRs target here for CI builds
-   *   feature/*   — active development; sync from root, extract common changes
+   *   feature/*   — active development; sync from main, extract common changes
    *
-   * Key commands: git-extract-common, git-sync-from-root, git-create-mr
+   * Key commands: git-extract-common, git-sync-from-main, git-create-mr
    */
   'feature-based': {
     architecture: 'feature-based',
     mainBranch: 'main',
     developBranch: 'develop',
-    rootBranch: 'root',
     devBranch: 'dev',
     stagingBranch: 'staging',
     productionBranch: 'production',
@@ -60,9 +59,9 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     hotfixBranchPrefix: 'hotfix',
     commonBranchPrefix: 'common',
     mrBranchPrefix: 'mr',
-    protectedBranches: ['root', 'dev', 'main', 'master', 'develop', 'staging', 'production'],
+    protectedBranches: ['dev', 'main', 'master', 'develop', 'staging', 'production'],
     syncStrategy: 'merge',
-    mrTargetByBranchPrefix: { feature: 'dev', common: 'root' },
+    mrTargetByBranchPrefix: { feature: 'dev', common: 'main' },
     baseBranchByBranchType: { feature: 'dev', hotfix: 'main' },
   },
 
@@ -83,7 +82,6 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     architecture: 'env-flow',
     mainBranch: 'main',
     developBranch: 'dev',
-    rootBranch: 'main',
     devBranch: 'dev',
     stagingBranch: 'qa',
     productionBranch: 'uat',
@@ -123,7 +121,6 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     architecture: 'gitflow',
     mainBranch: 'main',
     developBranch: 'develop',
-    rootBranch: 'main',
     devBranch: 'develop',
     stagingBranch: 'staging',
     productionBranch: 'main',
@@ -151,7 +148,6 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     architecture: 'github-flow',
     mainBranch: 'main',
     developBranch: 'main',
-    rootBranch: 'main',
     devBranch: 'main',
     stagingBranch: 'main',
     productionBranch: 'main',
@@ -181,7 +177,6 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     architecture: 'gitlab-flow',
     mainBranch: 'main',
     developBranch: 'main',
-    rootBranch: 'main',
     devBranch: 'main',
     stagingBranch: 'staging',
     productionBranch: 'production',
@@ -209,7 +204,6 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     architecture: 'trunk-based',
     mainBranch: 'main',
     developBranch: 'main',
-    rootBranch: 'main',
     devBranch: 'main',
     stagingBranch: 'staging',
     productionBranch: 'main',
@@ -237,7 +231,6 @@ const PRESETS: Record<ArchitecturePreset, PresetDefaults> = {
     architecture: 'monorepo',
     mainBranch: 'main',
     developBranch: 'main',
-    rootBranch: 'main',
     devBranch: 'main',
     stagingBranch: 'staging',
     productionBranch: 'production',

@@ -39,8 +39,8 @@ yarn coolkit create-mr --target dev
 {
   "scripts": {
     // ── Architecture workflows ──
-    "extract-common": "coolkit extract-common", // Extract shared code → common branch → MR to root
-    "sync-from-root": "coolkit sync-from-root", // Sync root changes into current feature branch
+    "extract-common": "coolkit extract-common", // Extract shared code → common branch → MR to main
+    "sync-from-main": "coolkit sync-from-main", // Sync main into current feature branch
     "create-mr": "coolkit create-mr", // Create MR/PR between any two branches
     "start-branch": "coolkit start-branch", // Create feature / release / hotfix branch
     "finish-branch": "coolkit finish-branch", // Push branch and open MR(s) per architecture
@@ -93,7 +93,7 @@ cp node_modules/@coolkits/git-workflows/git-controls.config.example.json git-con
 
 | Layer                         | Purpose                                                                                                                       |
 | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| 🏗️ **Architecture workflows** | Automate branch strategies - `feature-based`, `env-flow`, `gitflow`, `github-flow`, `gitlab-flow`, `trunk-based`, `monorepo` |
+| 🏗️ **Architecture workflows** | Automate branch strategies - `feature-based`, `env-flow`, `gitflow`, `github-flow`, `gitlab-flow`, `trunk-based`, `monorepo`  |
 | 🛠️ **Git utilities**          | One-liner commands for everyday pain points: undo, squash, amend, cherry-pick, branch recovery, conflict resolution, and more |
 
 ---
@@ -107,8 +107,8 @@ Select your workflow with `"architecture"` in `git-controls.config.json`.
 Separates common/shared code changes from feature changes across branches.
 
 ```bash
-coolkit extract-common        # Extract shared changes → common/* branch → MR to root
-coolkit sync-from-root        # Pull root changes into your feature branch
+coolkit extract-common        # Extract shared changes → common/* branch → MR to main
+coolkit sync-from-main        # Pull main into your feature branch
 coolkit create-mr             # Open MR: feature → dev (for CI build)
 coolkit start-branch user-auth        # Create feature/user-auth from dev
 coolkit finish-branch                 # Push + MR → dev
@@ -118,13 +118,13 @@ coolkit finish-branch                 # Push + MR → dev
 
 Team env promotion with `feature`, `fixbug`, `hotfix`, and `common` branches.
 
-| Branch | Role | MR target (default) |
-| ------ | ---- | ------------------- |
-| `main` | Source of truth | — |
-| `dev` | Feature integration | `feature/*` → **dev** |
-| `qa` | QA environment | `fixbug/*` → **qa** |
-| `uat` | UAT / pre-prod | `hotfix/*` → **uat** |
-| `common/*` | Shared code | → **main** |
+| Branch     | Role                | MR target (default)   |
+| ---------- | ------------------- | --------------------- |
+| `main`     | Source of truth     | —                     |
+| `dev`      | Feature integration | `feature/*` → **dev** |
+| `qa`       | QA environment      | `fixbug/*` → **qa**   |
+| `uat`      | UAT / pre-prod      | `hotfix/*` → **uat**  |
+| `common/*` | Shared code         | → **main**            |
 
 ```bash
 # Copy config-examples/env-flow.json → git-controls.config.json
@@ -278,7 +278,7 @@ Create `git-controls.config.json` in your project root:
 ```json
 {
   "architecture": "feature-based",
-  "rootBranch": "root",
+  "mainBranch": "main",
   "devBranch": "dev",
   "remote": "origin",
   "featurePath": ["src/features"],
@@ -293,7 +293,6 @@ Config files per architecture: [`config-examples/`](./config-examples/)
 | `architecture`         | `feature-based` | Workflow preset - drives all branch defaults              |
 | `mainBranch`           | `main`          | Canonical production branch                               |
 | `developBranch`        | `develop`       | Integration branch (gitflow)                              |
-| `rootBranch`           | `root`          | Common-source branch (feature-based)                      |
 | `devBranch`            | `dev`           | Dev-build integration (feature-based)                     |
 | `stagingBranch`        | `staging`       | Staging env (gitlab-flow)                                 |
 | `productionBranch`     | `production`    | Production env (gitlab-flow)                              |
@@ -307,7 +306,7 @@ Config files per architecture: [`config-examples/`](./config-examples/)
 | `remote`               | `origin`        | Git remote name                                           |
 | `protectedBranches`    | `[...]`         | Branches that cannot be used as feature/source            |
 | `mergeRequestProvider` | `gitlab`        | `gitlab` (glab CLI), `github` (gh CLI), `none` (URL only) |
-| `syncStrategy`         | `merge`         | `merge` or `rebase` for sync-from-root                    |
+| `syncStrategy`         | `merge`         | `merge` or `rebase` for sync-from-main                    |
 
 ### Message format templates
 
@@ -317,13 +316,13 @@ Override auto-generated MR titles and commit messages with `{placeholder}` templ
 | ---------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------- |
 | `createMrTitleFormat`              | `{sourceBranch} → {targetBranch}`                                                   | `create-mr`, `finish-branch`      |
 | `createMrTitleCheckoutFormat`      | `[{sourceBranch}] → {targetBranch}`                                                 | `create-mr --checkout`            |
-| `extractCommonMrTitleFormat`       | `[{featureBranch}] common → {rootBranch} ({timestamp})`                             | `extract-common` MR               |
+| `extractCommonMrTitleFormat`       | `[{featureBranch}] common → {mainBranch} ({timestamp})`                             | `extract-common` MR               |
 | `extractCommonCommitSubjectFormat` | `common: extract from {featureBranch} ({timestamp})`                                | `extract-common` commit subject   |
-| `extractCommonRootMergeFormat`     | `common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})` | Suggested merge commit in MR body |
+| `extractCommonMainMergeFormat`     | `common: merge shared changes from {featureBranch} ({commonBranch} → {mainBranch})` | Suggested merge commit in MR body |
 
 **Placeholders for `create-mr`:** `{sourceBranch}`, `{targetBranch}`, `{mrBranch}`, `{timestamp}`, `{architecture}`
 
-**Placeholders for `extract-common`:** `{featureBranch}`, `{commonBranch}`, `{rootBranch}`, `{timestamp}`, `{fileCount}`
+**Placeholders for `extract-common`:** `{featureBranch}`, `{commonBranch}`, `{mainBranch}`, `{timestamp}`, `{fileCount}`
 
 Example — custom MR title for dev builds:
 
@@ -349,7 +348,7 @@ Override auto-generated branch names and backup tags with `{placeholder}` templa
 | `hotfixBranchFormat`  | `{hotfixBranchPrefix}/{nameSlug}`                | `start-branch --type hotfix`  |
 | `fixBranchFormat`     | `fix/{nameSlug}`                                 | `start-branch --type fix`     |
 | `choreBranchFormat`   | `chore/{nameSlug}`                               | `start-branch --type chore`   |
-| `syncBackupTagFormat` | `backup/{branchSlug}-{timestamp}`                | `sync-from-root` rollback tag |
+| `syncBackupTagFormat` | `backup/{branchSlug}-{timestamp}`                | `sync-from-main` rollback tag |
 
 **`commonBranchFormat`:** `{commonBranchPrefix}`, `{featureBranch}`, `{featureSlug}`, `{timestamp}`
 

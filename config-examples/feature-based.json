@@ -1,11 +1,9 @@
 {
-  "_doc": "Feature-based architecture. Common/shared code is separated from feature code. Use git-extract-common to push shared changes to root, and git-sync-from-root to pull root into your feature branch.",
+  "_doc": "Feature-based architecture. Common/shared code is separated from feature code. Use extract-common to push shared changes to main, and sync-from-main to pull main into your feature branch.",
 
   "architecture": "feature-based",
 
   "mainBranch": "main",
-
-  "rootBranch": "root",
 
   "devBranch": "dev",
 
@@ -23,7 +21,7 @@
 
   "remote": "origin",
 
-  "protectedBranches": ["root", "dev", "main", "master"],
+  "protectedBranches": ["dev", "main", "master"],
 
   "mergeRequestProvider": "gitlab",
 
@@ -33,11 +31,11 @@
 
   "createMrTitleCheckoutFormat": "[{sourceBranch}] → {targetBranch}",
 
-  "extractCommonMrTitleFormat": "[{featureBranch}] common → {rootBranch} ({timestamp})",
+  "extractCommonMrTitleFormat": "[{featureBranch}] common → {mainBranch} ({timestamp})",
 
   "extractCommonCommitSubjectFormat": "common: extract from {featureBranch} ({timestamp})",
 
-  "extractCommonRootMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {rootBranch})",
+  "extractCommonMainMergeFormat": "common: merge shared changes from {featureBranch} ({commonBranch} → {mainBranch})",
 
   "commonBranchFormat": "{commonBranchPrefix}/{featureSlug}-{timestamp}",
 
