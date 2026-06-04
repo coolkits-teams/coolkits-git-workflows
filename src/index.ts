@@ -32,6 +32,13 @@ export {
 export { createGitClient } from './core/git-client.js';
 export { createBranchResolver } from './core/branch-resolver.js';
 export { createWorkingTreeInspector } from './core/working-tree.js';
+export {
+  classifyConflictFile,
+  detectOwnedFeatureDirs,
+  listConflictedFiles,
+  takeRootVersion,
+} from './core/feature-scope.js';
+export type { ConflictOwnership } from './core/feature-scope.js';
 
 export { createGitLabProvider } from './providers/gitlab-provider.js';
 export { createGitHubProvider } from './providers/github-provider.js';
@@ -42,6 +49,8 @@ export { runSyncFromRootWorkflow } from './workflows/sync-from-root.js';
 export { runCreateMrWorkflow } from './workflows/create-mr.js';
 export { runStartBranchWorkflow } from './workflows/start-branch.js';
 export { runFinishBranchWorkflow } from './workflows/finish-branch.js';
+export { runReleaseUatWorkflow } from './workflows/release-uat.js';
+export { runFinalReleaseSyncWorkflow } from './workflows/final-release-sync.js';
 
 export { GitControlsError } from './errors.js';
 
@@ -68,5 +77,9 @@ export type {
   StartBranchResult,
   FinishBranchOptions,
   FinishBranchResult,
+  ReleaseUatOptions,
+  ReleaseUatResult,
+  FinalReleaseSyncOptions,
+  FinalReleaseSyncResult,
   WorkflowParams,
 } from './types.js';

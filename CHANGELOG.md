@@ -11,6 +11,64 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.1.0] — 2026-06-04
+
+### Added
+
+- **`release-uat` workflow** (`coolkit release-uat`) — syncs `root` into the current feature
+  branch first, then creates a safe MR branch and opens an MR from the feature branch to
+  `uat`. Stops with resolution instructions when conflicts occur. Accepts `--branch`, `--dry-run`.
+
+- **`final-release-sync` workflow** (`coolkit final-release-sync`) — after UAT testing passes,
+  syncs `uat` back into `root`. Creates a temporary MR branch off `root`, merges `uat` into
+  it locally, and opens an MR into `root`. On conflict, prints a 4-step resolution guide
+  (git-level fix → conflict-marker scan → **mandatory `tsc --noEmit`** → commit/push) with
+  per-status commands (`UU`, `AA`, `UA`, `AU`, `DD`, `UD`, `DU`). Accepts `--dry-run`.
+
+  > **`tsc` step is mandatory.** `--ours` on `UU`/`AA` files silently drops UAT additions
+  > (new exports, types, props) that are the purpose of the sync. `tsc` is the only
+  > automatic detector for this class of silent code loss.
+
+- **`rebuild-clean-branch` workflow** (`coolkit rebuild-clean-branch`) — creates a clean
+  branch by squashing the diff between a contaminated source branch and a clean base into a
+  single commit. Useful when a branch has accumulated bad merges or unrelated code.
+
+- **`src/core/feature-scope.ts`** — new internal module used by `sync-from-main`:
+  - `detectOwnedFeatureDirs` — derives which `src/features/<x>` directories a branch
+    genuinely owns by inspecting first-parent non-merge commits since the merge-base.
+    Excludes code that arrived via earlier sync merges from `main`/`root`.
+  - `classifyConflictFile` — classifies a conflicted path as `'mine'`, `'other'`, or
+    `'shared'` relative to the detected owned dirs and `config.featurePath`.
+  - `listConflictedFiles` — reads `git status --porcelain` and returns all unmerged paths
+    (handles all status codes: `UU`, `AA`, `AU`, `UA`, `DD`, `UD`, `DU`).
+  - `takeRootVersion` — resolves a conflicted file by taking the root/incoming tree object
+    directly (`git checkout MERGE_HEAD -- <file>`) instead of `--theirs`, which is robust
+    against rename conflicts that `--theirs` fails on.
+
+### Changed
+
+- **`sync-from-main` smart conflict resolution** — when `root` is merged into a feature
+  branch and conflicts arise, the workflow now classifies each conflicted file:
+  - **OTHER features** (`src/features/<not-mine>/**`) → automatically resolved to root
+    (staged, not committed). Root is the source of truth; feature branches must adapt.
+  - **Own feature** (owned dirs detected from first-parent commits) → left untouched for
+    the developer to resolve manually.
+  - **Shared/common** (outside `featurePath`) → left untouched for manual resolution.
+
+  After auto-resolution, the workflow prints a clear next-steps list (resolve remaining →
+  `tsc --noEmit` → `git commit` → `git push`) and does **not** push automatically.
+  If zero owned dirs are detected or `--manual` is passed, all conflicts are left manual.
+
+- **`sync-from-main` new flags:**
+  - `--feature <branch>` — target feature branch (alias for the existing `--branch`).
+  - `--manual` — opt-out of smart resolution; leave every conflict for manual fixing.
+
+- **`SyncOptions`** — new optional fields `feature` and `manual`.
+- **`SyncResult`** — new statuses `'partial'` and `'manual'`; new fields `autoResolved`
+  and `manualFiles`.
+
+---
+
 ## [2.0.0] — 2026-05-27
 
 ### Breaking
@@ -42,6 +100,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - CLI: prefer `coolkit sync-from-main`; `sync-from-root` remains as a deprecated alias.
 
+[2.1.0]: https://github.com/coolkits-teams/coolkits-git-workflows/compare/v2.0.0...v2.1.0
 [2.0.0]: https://github.com/coolkits-teams/coolkits-git-workflows/releases/tag/v2.0.0
 
 ---

@@ -265,13 +265,27 @@ export interface ExtractResult {
 // sync-from-main (workflow file: sync-from-root.ts)
 
 export interface SyncOptions {
+  /** Feature branch to sync. Alias kept as `branch`. Default: current branch. */
+  feature?: string | null;
   branch?: string | null;
   skipPush?: boolean;
+  /** Disable smart conflict auto-resolution; leave every conflict for manual fixing. */
+  manual?: boolean;
 }
 
 export interface SyncResult {
-  status: 'synced' | 'up-to-date';
+  /**
+   * - 'synced':     clean merge (pushed unless --no-push).
+   * - 'up-to-date': nothing to merge.
+   * - 'partial':    conflicts in other features auto-resolved to root; staged, not committed.
+   * - 'manual':     conflicts left entirely for the developer (own feature / shared / opt-out).
+   */
+  status: 'synced' | 'up-to-date' | 'partial' | 'manual';
   backupTag?: string;
+  /** Conflicted files auto-resolved by keeping root (other features). */
+  autoResolved?: string[];
+  /** Conflicted files left for the developer (own feature + shared/common). */
+  manualFiles?: string[];
 }
 
 // create-mr
@@ -357,6 +371,70 @@ export interface FinishBranchResult {
   branch: string;
   targetBranch: string;
   additionalTargets?: string[]; // gitflow release/hotfix: also needs develop
+}
+
+// release-uat
+
+export interface ReleaseUatOptions {
+  /** Feature branch to release. Default: current branch. */
+  branch?: string | null;
+  dryRun?: boolean;
+}
+
+export interface ReleaseUatResult {
+  status: 'created' | 'conflict' | 'dry-run';
+  featureBranch: string;
+  mrBranch: string;
+  url?: string | undefined;
+}
+
+// final-release-sync
+
+export interface FinalReleaseSyncOptions {
+  dryRun?: boolean;
+}
+
+export interface FinalReleaseSyncResult {
+  status: 'created' | 'conflict' | 'up-to-date' | 'dry-run';
+  mrBranch?: string;
+  url?: string;
+}
+
+// rebuild-clean-branch
+
+export interface RebuildCleanBranchOptions {
+  /**
+   * The contaminated source branch to extract clean code from.
+   * Default: current branch.
+   */
+  branch?: string | null;
+  /**
+   * The clean base branch to rebuild from (e.g. "root", "main").
+   * Default: config.mainBranch.
+   */
+  base?: string | null;
+  /**
+   * Name for the new clean branch.
+   * Default: "<prefix>/<source-branch-slug>-clean" or auto-generated.
+   */
+  output?: string | null;
+  /**
+   * Commit message for the single squashed commit on the clean branch.
+   * Default: auto-generated from source branch name.
+   */
+  message?: string | null;
+  /** Preview changes without creating a branch. */
+  dryRun?: boolean;
+  /** Push the new clean branch to remote after creation. */
+  push?: boolean;
+}
+
+export interface RebuildCleanBranchResult {
+  status: 'rebuilt' | 'noop' | 'dry-run';
+  sourceBranch: string;
+  baseBranch: string;
+  cleanBranch: string;
+  filesChanged: number;
 }
 
 // generic param container

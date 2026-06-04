@@ -18,9 +18,16 @@ import { runSyncFromRootWorkflow } from '../src/workflows/sync-from-root.js';
 const HELP_TEXT = `
 Usage: coolkit sync-from-main [options]
 
+Merges root into your feature branch. On conflict, files belonging to OTHER features
+are auto-resolved by keeping root (the source of truth); your own feature files and
+shared/common files are left for you to resolve. Nothing is committed or pushed when
+conflicts occur.
+
 Options:
-  --branch <name>   Target branch. Defaults to the current branch.
-  --no-push         Merge locally without pushing.
+  --feature <name>  Feature branch to sync. Defaults to the current branch.
+  --branch <name>   Alias of --feature.
+  --manual          Disable auto-resolution; leave every conflict for manual fixing.
+  --no-push         On a clean merge, merge locally without pushing.
   --debug           Enable verbose debug logging.
   -h, --help        Show this help.
 `.trim();
@@ -41,8 +48,10 @@ async function main(): Promise<void> {
       config,
       logger,
       options: {
+        feature: getFlag('--feature'),
         branch: getFlag('--branch'),
         skipPush: hasFlag('--no-push'),
+        manual: hasFlag('--manual'),
       },
     });
   } catch (error) {

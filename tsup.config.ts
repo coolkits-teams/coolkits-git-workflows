@@ -41,6 +41,9 @@ export default defineConfig([
       'bin/bisect': 'bin/bisect.ts',
       'bin/tag-create': 'bin/tag-create.ts',
       'bin/tag-delete': 'bin/tag-delete.ts',
+      // ── Release workflows ───────────────────────────────────────────────
+      'bin/release-uat': 'bin/release-uat.ts',
+      'bin/final-release-sync': 'bin/final-release-sync.ts',
     },
     format: ['esm'],
     dts: false,

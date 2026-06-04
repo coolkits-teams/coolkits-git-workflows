@@ -36,6 +36,9 @@ const COMMANDS: Record<string, string> = {
   bisect: 'bisect.js',
   'tag-create': 'tag-create.js',
   'tag-delete': 'tag-delete.js',
+  'rebuild-clean-branch': 'rebuild-clean-branch.js',
+  'release-uat': 'release-uat.js',
+  'final-release-sync': 'final-release-sync.js',
 };
 
 const HELP = `
@@ -68,6 +71,10 @@ Commands:
   bisect           Binary search for bug-introducing commit
   tag-create       Create annotated tag + push
   tag-delete       Delete tag local + remote
+
+  rebuild-clean-branch  Rebuild a contaminated branch as a clean single-commit branch
+  release-uat           Sync root into feature branch, then open MR to UAT
+  final-release-sync    Sync UAT into root after a successful UAT release
 
 Run 'coolkit <command> --help' for command-specific help.
 `.trim();
