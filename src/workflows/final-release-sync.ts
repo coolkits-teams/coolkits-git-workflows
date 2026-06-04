@@ -1,12 +1,7 @@
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
 import { createMrProvider } from '../providers/mr-provider.js';
-import type {
-  Config,
-  FinalReleaseSyncOptions,
-  FinalReleaseSyncResult,
-  Logger,
-} from '../types.js';
+import type { Config, FinalReleaseSyncOptions, FinalReleaseSyncResult, Logger } from '../types.js';
 import {
   buildCreateMrTitle,
   buildMrBranchName,
@@ -105,19 +100,27 @@ export function runFinalReleaseSyncWorkflow({
     logger.plain('  # ── STEP 1: Resolve git-level conflicts ──────────────────────────────');
     logger.plain('');
     logger.plain('  # UU — both sides edited → keep root:');
-    logger.plain(`  git status --porcelain | awk '/^UU /{print $2}' | xargs -r git checkout --ours --`);
+    logger.plain(
+      `  git status --porcelain | awk '/^UU /{print $2}' | xargs -r git checkout --ours --`,
+    );
     logger.plain(`  git status --porcelain | awk '/^UU /{print $2}' | xargs -r git add`);
     logger.plain('');
     logger.plain('  # AA — both sides added same file → keep root (see STEP 2 warning below):');
-    logger.plain(`  git status --porcelain | awk '/^AA /{print $2}' | xargs -r git checkout --ours --`);
+    logger.plain(
+      `  git status --porcelain | awk '/^AA /{print $2}' | xargs -r git checkout --ours --`,
+    );
     logger.plain(`  git status --porcelain | awk '/^AA /{print $2}' | xargs -r git add`);
     logger.plain('');
     logger.plain('  # UA — added by UAT, root has nothing → keep UAT version:');
-    logger.plain(`  git status --porcelain | awk '/^UA /{print $2}' | xargs -r git checkout MERGE_HEAD --`);
+    logger.plain(
+      `  git status --porcelain | awk '/^UA /{print $2}' | xargs -r git checkout MERGE_HEAD --`,
+    );
     logger.plain(`  git status --porcelain | awk '/^UA /{print $2}' | xargs -r git add`);
     logger.plain('');
     logger.plain('  # AU — rename conflict: use HEAD tree (not --ours) to avoid staged markers:');
-    logger.plain(`  git status --porcelain | awk '/^AU /{print $2}' | xargs -r git checkout HEAD --`);
+    logger.plain(
+      `  git status --porcelain | awk '/^AU /{print $2}' | xargs -r git checkout HEAD --`,
+    );
     logger.plain(`  git status --porcelain | awk '/^AU /{print $2}' | xargs -r git add`);
     logger.plain('');
     logger.plain('  # DD — both deleted → confirm removal:');
@@ -131,19 +134,27 @@ export function runFinalReleaseSyncWorkflow({
     logger.plain('');
     logger.plain('  # ── STEP 2: Scan for conflict markers ────────────────────────────────');
     logger.plain('');
-    logger.plain(`  grep -rl "^<<<<<<" --include="*.ts" --include="*.tsx" --include="*.json" . || echo "clean"`);
+    logger.plain(
+      `  grep -rl "^<<<<<<" --include="*.ts" --include="*.tsx" --include="*.json" . || echo "clean"`,
+    );
     logger.plain('');
     logger.plain('  # ── STEP 3: TypeScript check (MANDATORY — prevents silent code loss) ─');
     logger.plain('');
     logger.plain('  # WARNING: --ours on UU/AA files silently drops UAT new exports/types/props.');
     logger.plain('  # If UAT added new functionality (types, exports, props), those additions');
-    logger.plain('  # are the PURPOSE of this sync. Losing them means root misses the new feature.');
+    logger.plain(
+      '  # are the PURPOSE of this sync. Losing them means root misses the new feature.',
+    );
     logger.plain('  # tsc catches these as type errors in files that depend on the new code.');
     logger.plain('');
     logger.plain('  npx tsc --noEmit 2>&1 | grep "error TS" | grep -v node_modules');
     logger.plain('');
-    logger.plain('  # For each erroring file — compare root vs UAT to decide which version to keep:');
-    logger.plain('  #   git diff HEAD MERGE_HEAD -- <file>   (+ lines = UAT added, - lines = root has)');
+    logger.plain(
+      '  # For each erroring file — compare root vs UAT to decide which version to keep:',
+    );
+    logger.plain(
+      '  #   git diff HEAD MERGE_HEAD -- <file>   (+ lines = UAT added, - lines = root has)',
+    );
     logger.plain('  # If UAT is a superset (adds new exports/types the errors point to):');
     logger.plain('  #   git show origin/${uatBranch}:<file> > <file> && git add <file>');
     logger.plain('  # If root is truly newer (hotfix applied after UAT):');
@@ -155,7 +166,9 @@ export function runFinalReleaseSyncWorkflow({
     logger.plain('');
     logger.plain('  # ── STEP 4: Commit and push ───────────────────────────────────────────');
     logger.plain('');
-    logger.plain(`  git status --porcelain | grep -E "^(UU|AA|AU|UA|DD|UD|DU) " && echo "STILL HAS CONFLICTS" || git commit`);
+    logger.plain(
+      `  git status --porcelain | grep -E "^(UU|AA|AU|UA|DD|UD|DU) " && echo "STILL HAS CONFLICTS" || git commit`,
+    );
     logger.plain(`  git push -u ${config.remote} ${mrBranch}`);
     logger.plain('');
     logger.plain(`  # Open MR: ${provider.buildMergeRequestUrl(mrBranch, rootBranch)}`);

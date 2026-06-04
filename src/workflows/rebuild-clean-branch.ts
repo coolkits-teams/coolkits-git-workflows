@@ -3,7 +3,12 @@ import { spawnSync } from 'node:child_process';
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
 import { GitControlsError } from '../errors.js';
-import type { Config, Logger, RebuildCleanBranchOptions, RebuildCleanBranchResult } from '../types.js';
+import type {
+  Config,
+  Logger,
+  RebuildCleanBranchOptions,
+  RebuildCleanBranchResult,
+} from '../types.js';
 
 /**
  * Rebuilds a contaminated feature branch as a clean single-commit branch
