@@ -44,6 +44,7 @@ export default defineConfig([
       // ── Release workflows ───────────────────────────────────────────────
       'bin/release-uat': 'bin/release-uat.ts',
       'bin/final-release-sync': 'bin/final-release-sync.ts',
+      'bin/clean-local': 'bin/clean-local.ts',
     },
     format: ['esm'],
     dts: false,

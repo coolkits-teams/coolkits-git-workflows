@@ -39,6 +39,7 @@ const COMMANDS: Record<string, string> = {
   'rebuild-clean-branch': 'rebuild-clean-branch.js',
   'release-uat': 'release-uat.js',
   'final-release-sync': 'final-release-sync.js',
+  'clean-local': 'clean-local.js',
 };
 
 const HELP = `
@@ -75,6 +76,7 @@ Commands:
   rebuild-clean-branch  Rebuild a contaminated branch as a clean single-commit branch
   release-uat           Sync root into feature branch, then open MR to UAT
   final-release-sync    Sync UAT into root after a successful UAT release
+  clean-local           Reset local repo to pristine remote state (delete all local branches)
 
 Run 'coolkit <command> --help' for command-specific help.
 `.trim();

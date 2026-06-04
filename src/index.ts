@@ -51,6 +51,8 @@ export { runStartBranchWorkflow } from './workflows/start-branch.js';
 export { runFinishBranchWorkflow } from './workflows/finish-branch.js';
 export { runReleaseUatWorkflow } from './workflows/release-uat.js';
 export { runFinalReleaseSyncWorkflow } from './workflows/final-release-sync.js';
+export { runCleanLocalWorkflow } from './workflows/clean-local.js';
+export type { CleanLocalOptions, CleanLocalResult } from './workflows/clean-local.js';
 
 export { GitControlsError } from './errors.js';
 
