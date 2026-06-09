@@ -11,6 +11,45 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.2.0] — 2026-06-04
+
+### Added
+
+- **Hunk-level conflict auto-resolution** (`src/core/conflict-hunks.ts`,
+  `resolveModifyConflict`) — for "both modified" (`UU`) files, resolves each conflict
+  region individually using the diff3 common-ancestor section:
+  - **Modification hunk** (base has content, both sides edited it) → keep root.
+  - **Addition hunk** (base empty, both sides inserted new code) → keep **both** sides,
+    unless the incoming side declares a symbol (`const`/`function`/`type`/`interface`/
+    `enum`/`class`) that already exists in root → then keep root only (dedup).
+  - **Tangled hunk** (a modification and a *net-new* incoming symbol share one hunk with
+    no separating anchor line) → left **unresolved** for the developer, rather than
+    silently dropping the new code.
+  - Non-code files never merge both sides (would break structure) → keep root.
+
+- **`final-release-sync` now auto-resolves conflicts with root priority**
+  (`src/core/conflict-resolver.ts`, `autoResolveRootPriority`) instead of only printing a
+  manual guide. `UU` files go through hunk-level analysis; file-level conflicts use
+  deterministic rules (`AA`/`AU`/`UD` → root, `UA` → keep new UAT file, `DD`/`DU` →
+  deletion). Nothing is committed — it stops for review + mandatory `tsc --noEmit`.
+
+- **`sync-from-main` (`sync-from-root`) root-behind guard** — when an other-feature file
+  conflicts, it is taken from root wholesale **only if root is not behind**. If the
+  feature branch carries commits for that file which root lacks (e.g. the feature was
+  released to UAT but not yet synced back via `final-release-sync`), overwriting with
+  stale root would lose code, so the file is **deferred to manual resolution** with a
+  clear warning to run the UAT→root sync first. Detected via
+  `isFeatureAheadOfRootForFile` (`git rev-list --count MERGE_HEAD..HEAD -- <file>`).
+  Hunk-level merging is intentionally NOT used here — `sync-from-main` keeps root
+  wholesale for other features; hunk-level keep-both belongs to `final-release-sync`.
+
+### Changed
+
+- `feature-scope.ts` exposes `listConflictStatus` (path → porcelain code) and
+  `listConflictedFiles` now derives from it.
+
+---
+
 ## [2.1.0] — 2026-06-04
 
 ### Added

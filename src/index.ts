@@ -35,10 +35,18 @@ export { createWorkingTreeInspector } from './core/working-tree.js';
 export {
   classifyConflictFile,
   detectOwnedFeatureDirs,
+  isFeatureAheadOfRootForFile,
   listConflictedFiles,
+  listConflictStatus,
+  listNewFilesInOtherDirs,
+  takeMineVersion,
   takeRootVersion,
 } from './core/feature-scope.js';
 export type { ConflictOwnership } from './core/feature-scope.js';
+export { resolveModifyConflict } from './core/conflict-hunks.js';
+export type { HunkResolution, RootSide } from './core/conflict-hunks.js';
+export { autoResolveUatToRoot, getRepoRoot } from './core/conflict-resolver.js';
+export type { ConflictResolutionSummary } from './core/conflict-resolver.js';
 
 export { createGitLabProvider } from './providers/gitlab-provider.js';
 export { createGitHubProvider } from './providers/github-provider.js';

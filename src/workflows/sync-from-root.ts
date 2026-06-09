@@ -3,6 +3,8 @@ import {
   classifyConflictFile,
   detectOwnedFeatureDirs,
   listConflictedFiles,
+  listNewFilesInOtherDirs,
+  takeMineVersion,
   takeRootVersion,
 } from '../core/feature-scope.js';
 import { createGitClient } from '../core/git-client.js';
@@ -99,8 +101,11 @@ function createBackupTag(git: GitClient, branch: string, config: Config): string
 /**
  * Smart conflict handling for a root→feature sync.
  *
- * Auto-resolves conflicts in OTHER features (keep root, the source of truth) and leaves
- * the developer's OWN feature + shared/common files untouched for manual resolution.
+ * Resolution rules:
+ *   - mine  (current feature's own files)  → auto-keep HEAD (feature branch code)
+ *   - other (different feature's files)    → auto-take root 100%
+ *   - shared/common (outside featurePath)  → leave for dev, listed with a clear note
+ *
  * Never commits or pushes — the developer reviews, type-checks, and commits.
  */
 function handleConflicts({
@@ -140,35 +145,77 @@ function handleConflicts({
 
   logger.info(`Feature branch owns: ${ownedDirs.join(', ')}`);
 
-  const autoResolved: string[] = [];
-  const manualFiles: string[] = [];
+  const keptMine: string[] = [];
+  const keptRoot: string[] = [];
+  const sharedFiles: string[] = [];
 
   conflicts.forEach((file) => {
     const ownership = classifyConflictFile(file, ownedDirs, config);
-    if (ownership === 'other') {
-      takeRootVersion({ git, file, rootRef: 'MERGE_HEAD' });
-      autoResolved.push(file);
-    } else {
-      manualFiles.push(file);
+
+    if (ownership === 'shared') {
+      // Common/shared file: leave conflicted for dev to resolve manually.
+      sharedFiles.push(file);
+      return;
     }
+
+    if (ownership === 'mine') {
+      // My own feature's file: keep current branch (HEAD) — I own this code.
+      takeMineVersion({ git, file });
+      keptMine.push(file);
+      return;
+    }
+
+    // Other feature's file: root is the source of truth — take it 100%.
+    takeRootVersion({ git, file, rootRef: 'MERGE_HEAD' });
+    keptRoot.push(file);
   });
 
-  if (autoResolved.length > 0) {
-    logger.ok(`Auto-resolved ${autoResolved.length.toString()} other-feature file(s) → kept root:`);
-    autoResolved.forEach((f) => {
-      logger.plain(`  ✓ ${f}`);
+  // Also bring in NEW files that root added to other-feature dirs.
+  // These aren't in the conflict list but auto-resolved files may import them.
+  const newOtherFiles = listNewFilesInOtherDirs({
+    git,
+    config,
+    ownedDirs,
+    rootRef: 'MERGE_HEAD',
+  });
+  newOtherFiles.forEach((file) => {
+    takeRootVersion({ git, file, rootRef: 'MERGE_HEAD' });
+    keptRoot.push(file);
+  });
+
+  if (keptMine.length > 0) {
+    logger.ok(`Auto-resolved ${keptMine.length.toString()} own-feature file(s) → kept your code:`);
+    keptMine.forEach((f) => {
+      logger.plain(`  ✓ [mine] ${f}`);
     });
   }
 
-  if (manualFiles.length > 0) {
-    logger.warn(`${manualFiles.length.toString()} file(s) need your manual resolution:`);
-    manualFiles.forEach((f) => {
-      logger.plain(`  - ${f}`);
+  if (keptRoot.length > 0) {
+    logger.ok(
+      `Auto-resolved ${keptRoot.length.toString()} other-feature file(s) → kept root (100%):`,
+    );
+    keptRoot.forEach((f) => {
+      logger.plain(`  ✓ [root] ${f}`);
     });
   }
 
-  printNextSteps(logger, backupTag, manualFiles.length > 0);
-  return { status: 'partial', backupTag, autoResolved, manualFiles };
+  if (sharedFiles.length > 0) {
+    logger.warn(
+      `${sharedFiles.length.toString()} common/shared file(s) still need manual resolution:`,
+    );
+    sharedFiles.forEach((f) => {
+      logger.plain(`  ✎ ${f}`);
+    });
+    logger.plain('');
+    logger.plain('  Common/shared files are owned by the whole team. Please:');
+    logger.plain('  1. Resolve the conflicts in those files manually.');
+    logger.plain('  2. If your change is a shared improvement, consider running');
+    logger.plain('     "extract-common" to push it to root before re-syncing.');
+  }
+
+  const autoResolved = [...keptMine, ...keptRoot];
+  printNextSteps(logger, backupTag, sharedFiles.length > 0);
+  return { status: 'partial', backupTag, autoResolved, manualFiles: sharedFiles };
 }
 
 function printNextSteps(logger: Logger, backupTag: string, hasManual = true): void {
