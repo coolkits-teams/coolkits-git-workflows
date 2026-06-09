@@ -22,7 +22,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   - **Addition hunk** (base empty, both sides inserted new code) → keep **both** sides,
     unless the incoming side declares a symbol (`const`/`function`/`type`/`interface`/
     `enum`/`class`) that already exists in root → then keep root only (dedup).
-  - **Tangled hunk** (a modification and a *net-new* incoming symbol share one hunk with
+  - **Tangled hunk** (a modification and a _net-new_ incoming symbol share one hunk with
     no separating anchor line) → left **unresolved** for the developer, rather than
     silently dropping the new code.
   - Non-code files never merge both sides (would break structure) → keep root.
