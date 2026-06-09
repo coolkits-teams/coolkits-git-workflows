@@ -30,7 +30,7 @@ export function runSquashWorkflow({
   const hasRemote = git.run(['rev-parse', '--verify', remoteRef]).ok;
   if (hasRemote) {
     const ahead = Number(git.runOrThrow(['rev-list', '--count', `${remoteRef}..HEAD`]).trim());
-    if (ahead < count) {
+    if (ahead < count && !options.force) {
       const canSquash = ahead;
       throw new GitControlsError(
         `Only ${canSquash.toString()} of the ${count.toString()} commits are unpushed.`,

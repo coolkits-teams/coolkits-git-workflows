@@ -2,6 +2,11 @@
 # yarn lockfile v1
 
 
+"@coolkits/git-workflows@^2.2.0":
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@coolkits/git-workflows/-/git-workflows-2.2.0.tgz#6ee62c192105a14c8e000dded3d7fa138e7dc5f2"
+  integrity sha512-PhDPCYPsDRd4MmDfSpsxmo83tHM0yfFz6255d+dtMHfEGZUp1XOndyPs+xqdflKlXIaeY1pObeTdtpZi+h3C9Q==
+
 "@esbuild/aix-ppc64@0.27.7":
   version "0.27.7"
   resolved "https://registry.yarnpkg.com/@esbuild/aix-ppc64/-/aix-ppc64-0.27.7.tgz#82b74f92aa78d720b714162939fb248c90addf53"
