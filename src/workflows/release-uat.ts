@@ -1,6 +1,7 @@
 import { createBranchResolver } from '../core/branch-resolver.js';
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
+import { GitControlsError } from '../errors.js';
 import type { Config, Logger, ReleaseUatOptions, ReleaseUatResult } from '../types.js';
 import { runCreateMrWorkflow } from './create-mr.js';
 import { runSyncFromRootWorkflow } from './sync-from-root.js';
@@ -48,17 +49,24 @@ export function runReleaseUatWorkflow({
   logger.info(`[1/2] Syncing '${config.mainBranch}' into '${featureBranch}'...`);
 
   /*
-   * runSyncFromRootWorkflow throws when a merge conflict is detected.
-   * The error message includes step-by-step resolution instructions.
-   * The caller (bin) propagates the exit-code-1 so the dev sees them.
-   * After resolving and committing, re-running this command will find the
-   * branch already up-to-date and proceed to Step 2.
+   * If the sync stops due to merge conflicts (status: 'partial' or 'manual'),
+   * abort the release pipeline. The developer must resolve conflicts, commit,
+   * and re-run release-uat. On re-run the branch will be up-to-date and
+   * the workflow proceeds directly to Step 2.
    */
-  runSyncFromRootWorkflow({
+  const syncResult = runSyncFromRootWorkflow({
     config,
     logger,
     options: { branch: featureBranch },
   });
+
+  if (syncResult.status === 'partial' || syncResult.status === 'manual') {
+    throw new GitControlsError('Cannot proceed: merge conflicts must be resolved first.', [
+      'Resolve all conflicts listed above.',
+      'Run: git add . && git commit',
+      'Then re-run: coolkit release-uat',
+    ]);
+  }
 
   // ── Step 2: create MR feature → UAT ─────────────────────────────────────
 

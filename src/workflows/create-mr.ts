@@ -1,6 +1,7 @@
 import { createBranchResolver } from '../core/branch-resolver.js';
 import { createGitClient } from '../core/git-client.js';
 import { createWorkingTreeInspector } from '../core/working-tree.js';
+import { GitControlsError } from '../errors.js';
 import { createMrProvider } from '../providers/mr-provider.js';
 import type { Config, CreateMrOptions, CreateMrResult, Logger } from '../types.js';
 import {
@@ -157,6 +158,13 @@ export function runCreateMrWorkflow({
     description,
     cwd: process.cwd(),
   });
+
+  if (!result.ok && result.reason !== 'provider-none') {
+    throw new GitControlsError(
+      `Merge request creation failed (${result.reason ?? 'unknown'}).`,
+      ['See output above for details.', `Fallback URL: ${result.url}`],
+    );
+  }
 
   return { status: 'created', sourceBranch, targetBranch, mrBranch, url: result.url };
 }

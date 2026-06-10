@@ -11,6 +11,83 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.0] — 2026-06-10
+
+### Added
+
+- **`coolkit wip`** (`bin/wip.ts`, `src/workflows/wip.ts`) — Save the current
+  working state as a `wip: …` commit in one command. Use `--pop` to soft-reset
+  it back to the working tree, `--message` for a custom label, and `--push` to
+  share the WIP with teammates. Prevents stash loss and makes context-switching
+  safe.
+
+- **`coolkit rename-branch`** (`bin/rename-branch.ts`, `src/workflows/rename-branch.ts`) —
+  Renames a branch locally **and** on the remote in a single command:
+  `git branch -m`, then `git push -u <remote> <new-name>` and
+  `git push <remote> --delete <old-name>`. Updates upstream tracking.
+  `--no-remote` skips the remote step.
+
+- **`coolkit branch-status`** (`bin/branch-status.ts`, `src/workflows/branch-status.ts`) —
+  Fetches remote and shows a table of all local branches with ahead/behind
+  counts vs `main`, last commit time, last author, and remote status
+  (`[gone]`, `[local only]`, `[push needed]`, `[diverged]`). Useful for
+  daily standups and pre-release health checks. `--no-fetch` skips the fetch.
+  `--pattern` filters by name substring.
+
+- **`coolkit commit`** (`bin/commit.ts`, `src/workflows/commit.ts`) — Guided
+  conventional commit builder. Direct mode: `coolkit commit feat "add login"
+  --scope auth`. Interactive mode: `coolkit commit --interactive` (or just
+  `coolkit commit` in a TTY) — prompts for type, scope, description, body, and
+  breaking-change footer. Validates commit type, shows semver-bump hint from
+  `semverBumpByCommitType` config. `--all` runs `git add -A` first.
+
+- **`coolkit changelog`** (`bin/changelog.ts`, `src/workflows/changelog.ts`) —
+  Generates a Keep-a-Changelog–formatted section from conventional commits.
+  Auto-detects the last git tag as the range start. Grouped sections:
+  Features, Bug Fixes, Performance, Refactoring, Docs, Tests, Chores, etc.
+  Breaking-change commits get their own top section. `--output FILE --prepend`
+  inserts the new section into an existing CHANGELOG file.
+
+- **`coolkit open-mr`** (`bin/open-mr.ts`, `src/workflows/open-mr.ts`) —
+  Builds the MR/PR creation URL for the current branch (using the configured
+  provider: gitlab, github, or none) and opens it in the default browser
+  (`xdg-open` / `wslview` on Linux, `open` on macOS, `start` on Windows).
+  `--print` outputs the URL without opening a browser.
+
+### Fixed
+
+- **B1 — `rebuild-clean-branch` never built** (`tsup.config.ts`) — The command
+  was registered in the `coolkit` dispatcher since v2.0.0 but its entry point
+  was missing from `tsup.config.ts`, causing a runtime crash on every invocation.
+  Added `'bin/rebuild-clean-branch': 'bin/rebuild-clean-branch.ts'` to the CLI
+  build entries.
+
+- **B2 — `release-uat` continued on unresolved merge conflicts**
+  (`src/workflows/release-uat.ts`) — `runSyncFromRootWorkflow` returns
+  `{status:'partial'}` or `{status:'manual'}` instead of throwing when conflicts
+  occur. `release-uat` previously ignored the return value and proceeded to
+  create the MR with a half-merged branch. Now it throws `GitControlsError` with
+  clear resolution instructions when the sync result is non-clean.
+
+- **B3 — `create-mr` always reported success regardless of provider failure**
+  (`src/workflows/create-mr.ts`) — When `glab` or `gh` commands failed (network
+  error, auth error, CLI not installed), the workflow still returned
+  `status:'created'`. Now throws `GitControlsError` for any non-`provider-none`
+  failure so the caller gets a non-zero exit code.
+
+- **B4 — `sync-from-root` (bin) exited 0 on merge conflicts**
+  (`bin/sync-from-root.ts`) — When the sync workflow returned `partial` or
+  `manual` (conflict path), the CLI exited with code 0, making CI pipelines
+  and scripts unable to detect the failed state. Now calls `process.exit(1)` on
+  those statuses.
+
+- **squash `--force` flag ignored** (`src/workflows/squash.ts`, fixed in prior
+  patch) — The pushed-commit safety guard did not check `options.force`, so
+  passing `--force` still raised the "Only N commits are unpushed" error. Guard
+  now reads `&& !options.force`.
+
+---
+
 ## [2.2.0] — 2026-06-04
 
 ### Added

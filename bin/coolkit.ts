@@ -40,6 +40,12 @@ const COMMANDS: Record<string, string> = {
   'release-uat': 'release-uat.js',
   'final-release-sync': 'final-release-sync.js',
   'clean-local': 'clean-local.js',
+  wip: 'wip.js',
+  'rename-branch': 'rename-branch.js',
+  'branch-status': 'branch-status.js',
+  commit: 'commit.js',
+  changelog: 'changelog.js',
+  'open-mr': 'open-mr.js',
 };
 
 const HELP = `
@@ -77,6 +83,13 @@ Commands:
   release-uat           Sync root into feature branch, then open MR to UAT
   final-release-sync    Sync UAT into root after a successful UAT release
   clean-local           Reset local repo to pristine remote state (delete all local branches)
+
+  wip                   Save/restore work-in-progress as a commit (pop to undo)
+  rename-branch         Rename branch locally + remote in one command
+  branch-status         Show all branches with ahead/behind vs main
+  commit                Conventional commit builder (direct or interactive)
+  changelog             Generate CHANGELOG from conventional commits since last tag
+  open-mr               Open MR/PR creation page in browser
 
 Run 'coolkit <command> --help' for command-specific help.
 `.trim();

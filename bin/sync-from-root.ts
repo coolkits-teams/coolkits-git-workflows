@@ -44,7 +44,7 @@ async function main(): Promise<void> {
   const config = await loadConfig();
 
   try {
-    runSyncFromRootWorkflow({
+    const result = runSyncFromRootWorkflow({
       config,
       logger,
       options: {
@@ -54,6 +54,10 @@ async function main(): Promise<void> {
         manual: hasFlag('--manual'),
       },
     });
+
+    if (result.status === 'partial' || result.status === 'manual') {
+      process.exit(1);
+    }
   } catch (error) {
     if (error instanceof GitControlsError) {
       logger.err(error.message);
