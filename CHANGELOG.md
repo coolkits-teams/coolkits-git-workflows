@@ -11,6 +11,25 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.1] — 2026-06-15
+
+### Added
+
+- **`coolkit prune-branches -n` / `--nuke-local`** — After `fetch --prune`, check out
+  `mainBranch` from config and force-delete every other local branch. Keeps only
+  the canonical branch (e.g. `root`). Supports `--dry-run` to preview deletions.
+
+### Fixed
+
+- **MR workflows no longer exit 1 when `glab` is missing or unauthenticated**
+  (`src/workflows/create-mr.ts`) — `release-uat`, `finish-branch`, `extract-common`,
+  `final-release-sync`, and `create-mr` now treat `glab-not-found` and
+  `glab-not-authenticated` as soft failures: the fallback MR URL is printed and
+  the command exits 0 so push/checkout steps are not reported as failed. Hard
+  failures (e.g. `glab-failed` after a failed API call) still throw.
+
+---
+
 ## [2.3.0] — 2026-06-10
 
 ### Added
@@ -36,7 +55,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 - **`coolkit commit`** (`bin/commit.ts`, `src/workflows/commit.ts`) — Guided
   conventional commit builder. Direct mode: `coolkit commit feat "add login"
-  --scope auth`. Interactive mode: `coolkit commit --interactive` (or just
+--scope auth`. Interactive mode: `coolkit commit --interactive` (or just
   `coolkit commit` in a TTY) — prompts for type, scope, description, body, and
   breaking-change footer. Validates commit type, shows semver-bump hint from
   `semverBumpByCommitType` config. `--all` runs `git add -A` first.

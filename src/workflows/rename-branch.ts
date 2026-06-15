@@ -64,19 +64,13 @@ export function runRenameBranchWorkflow({
       git.runOrThrow(['push', config.remote, '--delete', oldName], { stdio: 'inherit' });
       logger.ok(`Remote updated: ${config.remote}/${newName}`);
     } else {
-      logger.warn(
-        `No remote branch '${config.remote}/${oldName}' found — skipped remote update.`,
-      );
+      logger.warn(`No remote branch '${config.remote}/${oldName}' found — skipped remote update.`);
     }
   }
 
   // Ensure tracking is set if we're on the renamed branch
   if (oldName === currentBranch) {
-    const trackingSet = git.run([
-      'rev-parse',
-      '--verify',
-      `${config.remote}/${newName}`,
-    ]).ok;
+    const trackingSet = git.run(['rev-parse', '--verify', `${config.remote}/${newName}`]).ok;
     if (trackingSet) {
       git.run(['branch', `--set-upstream-to=${config.remote}/${newName}`, newName]);
     }

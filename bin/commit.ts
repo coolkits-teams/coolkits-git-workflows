@@ -20,7 +20,19 @@ import { parseCliArgs } from '../src/utils/cli-args.js';
 import { createLogger } from '../src/utils/logger.js';
 import { runCommitWorkflow } from '../src/workflows/commit.js';
 
-const VALID_TYPES = ['feat', 'fix', 'chore', 'refactor', 'docs', 'test', 'style', 'ci', 'build', 'perf', 'revert'];
+const VALID_TYPES = [
+  'feat',
+  'fix',
+  'chore',
+  'refactor',
+  'docs',
+  'test',
+  'style',
+  'ci',
+  'build',
+  'perf',
+  'revert',
+];
 
 const HELP = `
 Usage: coolkit commit <type> <message> [options]
@@ -85,7 +97,9 @@ async function promptInteractive(): Promise<{
     const bodyRaw = (await rl.question('Body (press Enter to skip): ')).trim();
     const body = bodyRaw || null;
 
-    const breakingRaw = (await rl.question('Breaking change description (press Enter to skip): ')).trim();
+    const breakingRaw = (
+      await rl.question('Breaking change description (press Enter to skip): ')
+    ).trim();
     const breaking = breakingRaw || null;
 
     const allRaw = (await rl.question('Stage all changes? (y/N): ')).trim().toLowerCase();
@@ -130,7 +144,8 @@ async function main(): Promise<void> {
     all: boolean;
   };
 
-  const isInteractive = hasFlag('--interactive') || (positionals.length === 0 && !getFlag('--type'));
+  const isInteractive =
+    hasFlag('--interactive') || (positionals.length === 0 && !getFlag('--type'));
 
   if (isInteractive) {
     if (!process.stdin.isTTY) {

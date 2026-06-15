@@ -36,8 +36,7 @@ export function runOpenMrWorkflow({
   const provider = createMrProvider({ git, config, logger });
 
   const sourceBranch = options.branch?.trim() ?? branches.resolve();
-  const targetBranch =
-    options.target?.trim() ?? resolveMrTargetBranch(config, sourceBranch);
+  const targetBranch = options.target?.trim() ?? resolveMrTargetBranch(config, sourceBranch);
 
   const url = provider.buildMergeRequestUrl(sourceBranch, targetBranch);
 

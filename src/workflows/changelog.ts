@@ -82,14 +82,7 @@ export function runChangelogWorkflow({
 
   logger.info(`Changelog range: ${range}`);
 
-  const rawLog = git
-    .run([
-      'log',
-      range,
-      '--format=%H\t%s\t%b',
-      '--no-merges',
-    ])
-    .stdout.trim();
+  const rawLog = git.run(['log', range, '--format=%H\t%s\t%b', '--no-merges']).stdout.trim();
 
   if (!rawLog) {
     logger.warn('No commits found in the specified range.');
@@ -143,8 +136,7 @@ export function runChangelogWorkflow({
 
   // Build markdown
   const today = new Date().toISOString().slice(0, 10);
-  const versionLabel =
-    options.to && options.to !== 'HEAD' ? options.to : 'Unreleased';
+  const versionLabel = options.to && options.to !== 'HEAD' ? options.to : 'Unreleased';
 
   const lines: string[] = [`## [${versionLabel}] — ${today}`, ''];
 

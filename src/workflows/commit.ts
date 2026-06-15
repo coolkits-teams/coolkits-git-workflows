@@ -51,7 +51,10 @@ export function runCommitWorkflow({
   const scope = options.scope?.trim();
   const message = options.message?.trim();
 
-  if (!type) throw new GitControlsError('Commit type is required.', [`Valid types: ${VALID_TYPES.join(', ')}`]);
+  if (!type)
+    throw new GitControlsError('Commit type is required.', [
+      `Valid types: ${VALID_TYPES.join(', ')}`,
+    ]);
   if (!message) throw new GitControlsError('Commit message/description is required.');
 
   if (!VALID_TYPES.includes(type)) {

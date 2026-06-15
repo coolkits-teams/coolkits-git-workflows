@@ -159,11 +159,14 @@ export function runCreateMrWorkflow({
     cwd: process.cwd(),
   });
 
-  if (!result.ok && result.reason !== 'provider-none') {
-    throw new GitControlsError(
-      `Merge request creation failed (${result.reason ?? 'unknown'}).`,
-      ['See output above for details.', `Fallback URL: ${result.url}`],
-    );
+  // Soft reasons: MR URL was already printed — caller can open it manually.
+  // Hard reasons (e.g. glab-failed): glab was available but the API call itself failed.
+  const SOFT_REASONS = new Set(['provider-none', 'glab-not-found', 'glab-not-authenticated']);
+  if (!result.ok && !SOFT_REASONS.has(result.reason ?? '')) {
+    throw new GitControlsError(`Merge request creation failed (${result.reason ?? 'unknown'}).`, [
+      'See output above for details.',
+      `Fallback URL: ${result.url}`,
+    ]);
   }
 
   return { status: 'created', sourceBranch, targetBranch, mrBranch, url: result.url };

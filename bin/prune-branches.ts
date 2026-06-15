@@ -4,6 +4,8 @@
  * Usage:
  *   git-prune-branches
  *   git-prune-branches --dry-run
+ *   git-prune-branches --nuke-local
+ *   git-prune-branches -n --dry-run
  */
 import { loadConfig } from '../src/config/load-config.js';
 import { GitControlsError } from '../src/errors.js';
@@ -18,8 +20,9 @@ Fetches from origin with --prune, then deletes local branches whose remote
 tracking branch no longer exists (merged and deleted MR branches).
 
 Options:
-  --dry-run     Show what would be deleted without actually deleting
-  -h, --help    Show this help
+  -n, --nuke-local  Checkout mainBranch then force-delete ALL other local branches
+  --dry-run         Show what would be deleted without actually deleting
+  -h, --help        Show this help
 `.trim();
 
 const { hasFlag } = parseCliArgs(process.argv);
@@ -33,7 +36,14 @@ const logger = createLogger({ debug: hasFlag('--debug') });
 loadConfig()
   .then((config) => {
     try {
-      runPruneBranchesWorkflow({ config, logger, options: { dryRun: hasFlag('--dry-run') } });
+      runPruneBranchesWorkflow({
+        config,
+        logger,
+        options: {
+          dryRun: hasFlag('--dry-run'),
+          nukeLocal: hasFlag('-n') || hasFlag('--nuke-local'),
+        },
+      });
     } catch (e) {
       if (e instanceof GitControlsError) {
         logger.err(e.message);
