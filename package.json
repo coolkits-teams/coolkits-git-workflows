@@ -12,7 +12,7 @@
     }
   },
   "bin": {
-    "coolkit": "./dist/bin/coolkit.js"
+    "coolkit": "dist/bin/coolkit.js"
   },
   "files": [
     "dist/",
@@ -24,7 +24,6 @@
   ],
   "scripts": {
     "build": "tsup",
-    "prepare": "npm run build",
     "build:watch": "tsup --watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint src bin",
