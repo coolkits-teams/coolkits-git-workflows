@@ -11,6 +11,15 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.3] — 2026-08-28
+
+### Changed
+
+- **`prepare` script** — Runs `npm run build` after install from git so `coolkit`
+  works when the package is installed via `git+https://…` (dist is not committed).
+
+---
+
 ## [2.3.2] — 2026-08-28
 
 ### Added
