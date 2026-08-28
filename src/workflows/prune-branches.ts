@@ -102,7 +102,9 @@ function runNukeLocal({
   }
 
   logger.info(`Found ${allBranches.length.toString()} local branch(es) to delete:`);
-  allBranches.forEach((b) => logger.plain(`  - ${b}`));
+  allBranches.forEach((b) => {
+    logger.plain(`  - ${b}`);
+  });
 
   if (dryRun) {
     logger.ok('[DRY-RUN] Would delete the branches listed above. Run without --dry-run to apply.');

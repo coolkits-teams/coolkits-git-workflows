@@ -11,6 +11,27 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.2] — 2026-08-28
+
+### Added
+
+- **`coolkit unreleased`** (`bin/unreleased.ts`, `src/workflows/unreleased.ts`) —
+  Port of the FE `git:unreleased` script. Lists commits on `--source` not yet
+  present on `--target` using patch-id, reverse-apply tree checks, and title
+  matching. Defaults: `qaBranch` → `preUatBranch` (or `uatBranch` when unset).
+  Supports `--author`, `--fast`, and explicit `--source` / `--target` refs.
+
+- **`coolkit clear-branches`** (`bin/clear-branches.ts`,
+  `src/workflows/clear-branches.ts`) — Deletes accumulated local feature branches
+  after fetch/prune. Default keeps `protectedBranches` and long-lived env
+  branches (`dev`, `qa`, `pre-uat`, `uat`, etc.). `--all` keeps only the base
+  branch; `--dry-run` previews deletions.
+
+- **`preUatBranch` config field** — Optional env-flow branch used as the default
+  `--target` for `coolkit unreleased` (e.g. `"pre-uat"`).
+
+---
+
 ## [2.3.1] — 2026-06-15
 
 ### Added

@@ -29,6 +29,7 @@ type PresetDefaults = Omit<
   | 'fixbugBranchFormat'
   | 'qaBranch'
   | 'uatBranch'
+  | 'preUatBranch'
   | 'additionalBranches'
   | 'fixbugBranchPrefix'
   | 'commitMessageFormat'

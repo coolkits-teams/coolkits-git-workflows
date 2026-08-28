@@ -27,6 +27,9 @@
   "_doc_uatBranch": "UAT / pre-production branch (env-flow). Hotfix and fixbug branches are created from here. Default: 'uat'.",
   "uatBranch": "uat",
 
+  "_doc_preUatBranch": "Pre-UAT gate branch (env-flow). Default target for coolkit unreleased when set. Example: 'pre-uat'.",
+  "preUatBranch": "",
+
   "_doc_additionalBranches": "Optional extra long-lived branches, e.g. {\"lts\": \"lts\"}. Use with start-branch --from lts when needed.",
   "additionalBranches": {},
 

@@ -14,6 +14,7 @@ export const DEFAULT_CONFIG: Readonly<Config> = Object.freeze({
   productionBranch: 'production',
   qaBranch: 'qa',
   uatBranch: 'uat',
+  preUatBranch: '',
   additionalBranches: {},
 
   featureBranchPrefix: 'feature',

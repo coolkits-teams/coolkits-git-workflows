@@ -53,6 +53,8 @@ export default defineConfig([
       'bin/commit': 'bin/commit.ts',
       'bin/changelog': 'bin/changelog.ts',
       'bin/open-mr': 'bin/open-mr.ts',
+      'bin/unreleased': 'bin/unreleased.ts',
+      'bin/clear-branches': 'bin/clear-branches.ts',
     },
     format: ['esm'],
     dts: false,

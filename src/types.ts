@@ -39,6 +39,8 @@ export interface Config {
   readonly qaBranch: string;
   /** UAT / pre-production branch (env-flow). Hotfix branches base off this. */
   readonly uatBranch: string;
+  /** Pre-UAT gate branch (env-flow). Used as default --target for unreleased. */
+  readonly preUatBranch: string;
 
   /**
    * Optional extra environment or long-lived branches (e.g. `"lts": "lts"`).

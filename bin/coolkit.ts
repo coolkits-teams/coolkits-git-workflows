@@ -46,6 +46,8 @@ const COMMANDS: Record<string, string> = {
   commit: 'commit.js',
   changelog: 'changelog.js',
   'open-mr': 'open-mr.js',
+  unreleased: 'unreleased.js',
+  'clear-branches': 'clear-branches.js',
 };
 
 const HELP = `
@@ -90,6 +92,8 @@ Commands:
   commit                Conventional commit builder (direct or interactive)
   changelog             Generate CHANGELOG from conventional commits since last tag
   open-mr               Open MR/PR creation page in browser
+  unreleased            List commits on source not yet released to target
+  clear-branches        Delete accumulated local feature branches
 
 Run 'coolkit <command> --help' for command-specific help.
 `.trim();
