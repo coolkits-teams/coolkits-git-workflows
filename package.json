@@ -1,6 +1,6 @@
 {
   "name": "@coolkits/git-workflows",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "description": "Zero-dependency coolkit CLI for git workflows: extract shared code to common branches, open merge requests to main, sync main into features, and env-flow/gitflow presets.",
   "type": "module",
   "main": "./dist/index.js",
@@ -24,6 +24,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "prepare": "npm run build",
     "build:watch": "tsup --watch",
     "type-check": "tsc --noEmit",
     "lint": "eslint src bin",
