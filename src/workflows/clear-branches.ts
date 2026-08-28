@@ -85,7 +85,9 @@ export function runClearBranchesWorkflow({
       } else {
         const remoteRef = `${config.remote}/${baseBranch}`;
         if (!git.run(['rev-parse', '--verify', remoteRef]).ok) {
-          throw new GitControlsError(`Base branch '${baseBranch}' does not exist locally or on remote.`);
+          throw new GitControlsError(
+            `Base branch '${baseBranch}' does not exist locally or on remote.`,
+          );
         }
         git.runOrThrow(['checkout', '-b', baseBranch, remoteRef]);
       }

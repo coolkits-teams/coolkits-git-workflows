@@ -75,17 +75,20 @@ function listCommits(
   const out = git.run(args).stdout.trim();
   if (!out) return [];
 
-  return out.split('\n').filter(Boolean).map((line) => {
-    const [hash, short, date, name, email, subject] = line.split('\0');
-    return {
-      hash: hash ?? '',
-      short: short ?? '',
-      date: date ?? '',
-      name: name ?? '',
-      email: email ?? '',
-      subject: subject ?? '',
-    };
-  });
+  return out
+    .split('\n')
+    .filter(Boolean)
+    .map((line) => {
+      const [hash, short, date, name, email, subject] = line.split('\0');
+      return {
+        hash: hash ?? '',
+        short: short ?? '',
+        date: date ?? '',
+        name: name ?? '',
+        email: email ?? '',
+        subject: subject ?? '',
+      };
+    });
 }
 
 function showPatchBuffer(hash: string): Buffer | null {
@@ -109,7 +112,10 @@ function patchIdForCommit(hash: string): string | null {
   return result.stdout.trim().split(/\s+/)[0] ?? null;
 }
 
-function buildTargetIndexes(git: GitClient, target: string): {
+function buildTargetIndexes(
+  git: GitClient,
+  target: string,
+): {
   bySubject: Map<string, string[]>;
   recentHashes: string[];
 } {
@@ -277,9 +283,7 @@ export function runUnreleasedWorkflow({
   const authorLabel = author ? ` (author~${author})` : ' (all authors)';
   const modeLabel = options.fast === true ? ' [fast/hash-only]' : ' [patch + tree + title]';
 
-  logger.plain(
-    `Comparing commits on ${source} not in ${target}${authorLabel}${modeLabel}`,
-  );
+  logger.plain(`Comparing commits on ${source} not in ${target}${authorLabel}${modeLabel}`);
   logger.plain(`Candidates by hash (target..source, no merges): ${commits.length.toString()}`);
 
   if (commits.length === 0) {
@@ -323,7 +327,9 @@ export function runUnreleasedWorkflow({
   } = classifyByPatchId(commits, bySubject, recentHashes, logger);
 
   const byHash = new Map(commits.map((c) => [c.hash, c]));
-  const already = [...matchedHashes].map((h) => byHash.get(h)).filter(Boolean) as UnreleasedCommit[];
+  const already = [...matchedHashes]
+    .map((h) => byHash.get(h))
+    .filter(Boolean) as UnreleasedCommit[];
   const empty = emptyHashes.map((h) => byHash.get(h)).filter(Boolean) as UnreleasedCommit[];
   let unresolved = unresolvedHashes.map((h) => byHash.get(h)).filter(Boolean) as UnreleasedCommit[];
 
@@ -349,11 +355,7 @@ export function runUnreleasedWorkflow({
     if (worktreeDir) removeTargetWorktree(git, worktreeDir);
   }
 
-  const {
-    ported,
-    ambiguous,
-    missing: unreleased,
-  } = classifyByTitle(unresolved, bySubject);
+  const { ported, ambiguous, missing: unreleased } = classifyByTitle(unresolved, bySubject);
 
   logger.plain(`Already on ${target} (same patch): ${already.length.toString()}`);
   logger.plain(`Empty commits (no diff): ${empty.length.toString()}`);
