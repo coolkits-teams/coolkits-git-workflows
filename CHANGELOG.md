@@ -11,6 +11,19 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.4] — 2026-09-03
+
+### Changed
+
+- **`coolkit unreleased` defaults** — Without options: compares **current branch**
+  → **preUatBranch** (or uatBranch), filters by **git user.email**.
+- **`coolkit unreleased --careful`** — Lists noisy commits (already on target, empty,
+  ported, ambiguous) with do-not-pick warnings. Default output shows only safe-to-pick
+  unreleased commits plus summary counts.
+- **`coolkit unreleased --all-authors`** — Disables the default author filter.
+
+---
+
 ## [2.3.3] — 2026-08-28
 
 ### Changed

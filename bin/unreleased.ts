@@ -3,6 +3,7 @@
  *
  * Usage:
  *   coolkit unreleased
+ *   coolkit unreleased --careful
  *   coolkit unreleased --source=origin/qa --target=origin/pre-uat
  *   coolkit unreleased --author=hung.ngo-van@banvien.com.vn
  *   coolkit unreleased --fast
@@ -19,27 +20,36 @@ Usage: coolkit unreleased [options]
 
 List commits on --source that are not yet present on --target.
 
-Default mode treats a commit as already released when:
-  1) an equivalent patch-id exists on target, or
-  2) reversing the commit's patch against the target tip succeeds, or
-  3) exactly one target commit shares the same subject (cherry-pick with conflict).
+Defaults (no options):
+  --source   current branch
+  --target   preUatBranch from config (or uatBranch)
+  --author   your git user.email
 
-Those are listed as [ported] so they are not picked again.
-Duplicate subjects on target are listed as [ambiguous].
+By default only unreleased (safe to pick) commits are listed.
+Noisy commits (already on target, empty, ported, ambiguous) are counted
+but hidden. Use --careful to list them with do-not-pick warnings.
+
+Equivalence checks (unless --fast):
+  1) same patch-id on target → already released
+  2) reverse-apply succeeds on target tree → already released
+  3) one target commit shares title → ported (conflict resolve, do not re-pick)
+  4) multiple target commits share title → ambiguous
 
 Options:
-  --source <ref>     Branch/ref that may have new commits (default: qaBranch from config)
-  --target <ref>     Branch/ref already released to (default: preUatBranch or uatBranch)
-  --author <email>   Filter by author email (substring match)
-  --fast             Skip equivalence checks; list commits by hash only
-  --debug            Verbose logging
-  -h, --help         Show this help
+  --source <ref>     Branch with candidate commits. Default: current branch.
+  --target <ref>     Branch already released to. Default: preUatBranch / uatBranch.
+  --author <email>   Filter by author email (substring). Default: git user.email.
+  --all-authors      Include commits from all authors (no author filter).
+  --careful          Also list noisy commits with do-not-pick warnings.
+  --fast             Skip equivalence checks; list by hash only.
+  --debug            Verbose logging.
+  -h, --help         Show this help.
 
 Examples:
   coolkit unreleased
+  coolkit unreleased --careful
   coolkit unreleased --source=origin/qa --target=origin/pre-uat
-  coolkit unreleased --author=hung.ngo-van@banvien.com.vn
-  coolkit unreleased --source=qa --target=pre-uat --fast
+  coolkit unreleased --all-authors --careful
 `.trim();
 
 function main(): void {
@@ -62,6 +72,8 @@ function main(): void {
             source: getFlag('--source'),
             target: getFlag('--target'),
             author: getFlag('--author'),
+            allAuthors: hasFlag('--all-authors'),
+            careful: hasFlag('--careful'),
             fast: hasFlag('--fast'),
           },
         });

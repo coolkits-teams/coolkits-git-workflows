@@ -10,14 +10,21 @@ import type { Config, GitClient, Logger } from '../types.js';
 const PATCH_BUFFER = 64 * 1024 * 1024;
 
 export interface UnreleasedOptions {
-  /** Branch/ref that may have new commits. Default: config.qaBranch */
+  /** Branch/ref that may have new commits. Default: current branch. */
   source?: string | null;
-  /** Branch/ref already released to. Default: config.preUatBranch or config.uatBranch */
+  /** Branch/ref already released to. Default: preUatBranch or uatBranch from config. */
   target?: string | null;
-  /** Filter by author email (substring match). */
+  /** Filter by author email (substring match). Default: git user.email. */
   author?: string | null;
+  /** Do not filter by author — include all authors. */
+  allAuthors?: boolean;
   /** Skip equivalence checks; list commits in target..source by hash only. */
   fast?: boolean;
+  /**
+   * Also list noisy commits (already on target, empty, ported, ambiguous)
+   * with warnings. Default: only unreleased commits are listed.
+   */
+  careful?: boolean;
 }
 
 export interface UnreleasedCommit {
@@ -43,6 +50,36 @@ export interface UnreleasedResult {
 
 function resolveDefaultTarget(config: Config): string {
   return config.preUatBranch.trim() !== '' ? config.preUatBranch : config.uatBranch;
+}
+
+function resolveCurrentBranch(git: GitClient): string {
+  const branch = git.runOrThrow(['branch', '--show-current']).trim();
+  if (!branch) {
+    throw new GitControlsError('Detached HEAD — checkout a branch first.');
+  }
+  return branch;
+}
+
+function resolveGitUserEmail(git: GitClient): string {
+  const email = git.run(['config', 'user.email']).stdout.trim();
+  if (!email) {
+    throw new GitControlsError('Git user.email is not configured.', [
+      'Set it with: git config user.email you@example.com',
+      'Or pass --author explicitly, or use --all-authors.',
+    ]);
+  }
+  return email;
+}
+
+function resolveAuthorFilter(
+  git: GitClient,
+  options: UnreleasedOptions,
+): string | null {
+  if (options.allAuthors === true) return null;
+  if (options.author != null && options.author.trim() !== '') {
+    return options.author.trim();
+  }
+  return resolveGitUserEmail(git);
 }
 
 function ensureRef(git: GitClient, ref: string): void {
@@ -271,9 +308,10 @@ export function runUnreleasedWorkflow({
 }): UnreleasedResult {
   const git = createGitClient();
 
-  const source = options.source?.trim() ?? config.qaBranch;
+  const source = options.source?.trim() ?? resolveCurrentBranch(git);
   const target = options.target?.trim() ?? resolveDefaultTarget(config);
-  const author = options.author?.trim() ?? null;
+  const author = resolveAuthorFilter(git, options);
+  const showNoise = options.careful === true;
 
   ensureRef(git, source);
   ensureRef(git, target);
@@ -282,9 +320,12 @@ export function runUnreleasedWorkflow({
 
   const authorLabel = author ? ` (author~${author})` : ' (all authors)';
   const modeLabel = options.fast === true ? ' [fast/hash-only]' : ' [patch + tree + title]';
+  const filterLabel = showNoise ? '' : ' [unreleased only — use --careful for warnings]';
 
-  logger.plain(`Comparing commits on ${source} not in ${target}${authorLabel}${modeLabel}`);
-  logger.plain(`Candidates by hash (target..source, no merges): ${commits.length.toString()}`);
+  logger.plain(
+    `Comparing commits on ${source} not in ${target}${authorLabel}${modeLabel}${filterLabel}`,
+  );
+  logger.plain(`Candidates by hash (${target}..${source}, no merges): ${commits.length.toString()}`);
 
   if (commits.length === 0) {
     logger.ok('No commits to report.');
@@ -362,9 +403,37 @@ export function runUnreleasedWorkflow({
   logger.plain(`Ported (same title, patch differs): ${ported.length.toString()}`);
   logger.plain(`Ambiguous titles: ${ambiguous.length.toString()}`);
   logger.plain(`Unreleased: ${unreleased.length.toString()}`);
+
+  const noiseCount = already.length + empty.length + ported.length + ambiguous.length;
+  if (!showNoise && noiseCount > 0) {
+    logger.plain('');
+    logger.plain(
+      `${noiseCount.toString()} noisy commit(s) hidden. Use --careful to list them with do-not-pick warnings.`,
+    );
+  }
+
   logger.plain('');
 
-  if (unreleased.length === 0 && ported.length === 0 && ambiguous.length === 0) {
+  if (unreleased.length === 0 && !showNoise) {
+    if (noiseCount > 0) {
+      logger.ok('Nothing to cherry-pick — all candidates are already on target or unsafe to pick.');
+    } else {
+      logger.ok('Nothing unreleased.');
+    }
+    return {
+      status: 'ok',
+      source,
+      target,
+      candidates: commits.length,
+      already: already.length,
+      empty: empty.length,
+      ported: ported.length,
+      ambiguous: ambiguous.length,
+      unreleased: 0,
+    };
+  }
+
+  if (unreleased.length === 0 && ported.length === 0 && ambiguous.length === 0 && showNoise) {
     logger.ok('Nothing unreleased.');
     return {
       status: 'ok',
@@ -379,27 +448,58 @@ export function runUnreleasedWorkflow({
     };
   }
 
-  for (const row of ported) {
-    logger.plain(
-      formatCommitLine(
-        row.commit,
-        `[ported → ${shortHash(row.targetHash)}, patch differs — do not cherry-pick again]`,
-      ),
-    );
+  if (showNoise) {
+    if (already.length > 0) {
+      logger.warn('Already on target (same patch) — do NOT cherry-pick:');
+      for (const c of already) {
+        logger.plain(formatCommitLine(c, '[already on target — skip]'));
+      }
+      logger.plain('');
+    }
+
+    if (empty.length > 0) {
+      logger.warn('Empty commits (no diff) — do NOT cherry-pick:');
+      for (const c of empty) {
+        logger.plain(formatCommitLine(c, '[empty commit — skip]'));
+      }
+      logger.plain('');
+    }
+
+    if (ported.length > 0) {
+      logger.warn('Ported with conflict resolve — do NOT cherry-pick again:');
+      for (const row of ported) {
+        logger.plain(
+          formatCommitLine(
+            row.commit,
+            `[ported → ${shortHash(row.targetHash)}, patch differs — do not cherry-pick again]`,
+          ),
+        );
+      }
+      logger.plain('');
+    }
+
+    if (ambiguous.length > 0) {
+      logger.warn('Ambiguous title on target — verify manually before picking:');
+      for (const row of ambiguous) {
+        const shorts = row.targetHashes.map(shortHash).join(', ');
+        logger.plain(
+          formatCommitLine(
+            row.commit,
+            `[ambiguous: ${row.targetHashes.length.toString()} commits on target share this title (${shorts})]`,
+          ),
+        );
+      }
+      logger.plain('');
+    }
   }
 
-  for (const row of ambiguous) {
-    const shorts = row.targetHashes.map(shortHash).join(', ');
-    logger.plain(
-      formatCommitLine(
-        row.commit,
-        `[ambiguous: ${row.targetHashes.length.toString()} commits on target share this title (${shorts})]`,
-      ),
-    );
-  }
-
-  for (const c of unreleased) {
-    logger.plain(formatCommitLine(c));
+  if (unreleased.length > 0) {
+    if (showNoise) {
+      logger.ok('Safe to cherry-pick:');
+    }
+    for (const c of unreleased) {
+      logger.plain(formatCommitLine(c));
+    }
   }
 
   return {
