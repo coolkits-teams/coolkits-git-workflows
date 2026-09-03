@@ -11,7 +11,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
-## [2.3.4] — 2026-09-03
+## [2.3.5] — 2026-09-03
 
 ### Changed
 
@@ -21,6 +21,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
   ported, ambiguous) with do-not-pick warnings. Default output shows only safe-to-pick
   unreleased commits plus summary counts.
 - **`coolkit unreleased --all-authors`** — Disables the default author filter.
+
+---
+
+## [2.3.4] — 2026-09-03
+
+### Changed
+
+- (See 2.3.5 — republished with complete implementation.)
 
 ---
 

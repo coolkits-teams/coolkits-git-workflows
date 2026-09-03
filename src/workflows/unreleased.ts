@@ -71,10 +71,7 @@ function resolveGitUserEmail(git: GitClient): string {
   return email;
 }
 
-function resolveAuthorFilter(
-  git: GitClient,
-  options: UnreleasedOptions,
-): string | null {
+function resolveAuthorFilter(git: GitClient, options: UnreleasedOptions): string | null {
   if (options.allAuthors === true) return null;
   if (options.author != null && options.author.trim() !== '') {
     return options.author.trim();
@@ -325,7 +322,9 @@ export function runUnreleasedWorkflow({
   logger.plain(
     `Comparing commits on ${source} not in ${target}${authorLabel}${modeLabel}${filterLabel}`,
   );
-  logger.plain(`Candidates by hash (${target}..${source}, no merges): ${commits.length.toString()}`);
+  logger.plain(
+    `Candidates by hash (${target}..${source}, no merges): ${commits.length.toString()}`,
+  );
 
   if (commits.length === 0) {
     logger.ok('No commits to report.');
