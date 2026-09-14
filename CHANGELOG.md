@@ -11,6 +11,18 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.6] — 2026-09-14
+
+### Fixed
+
+- **`coolkit unreleased` uses remote refs** — Source and target resolve to
+  `{remote}/{branch}` (default `origin/…`) instead of local branch tips.
+  Before comparing, runs `git fetch origin <source> <target>` so results
+  match the server even when local branches are stale. Pass `--no-fetch` to
+  skip.
+
+---
+
 ## [2.3.5] — 2026-09-03
 
 ### Changed
@@ -26,9 +38,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## [2.3.4] — 2026-09-03
 
-### Changed
-
-- (See 2.3.5 — republished with complete implementation.)
+_Pre-release placeholder — use 2.3.5._
 
 ---
 

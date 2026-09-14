@@ -25,6 +25,8 @@ export interface UnreleasedOptions {
    * with warnings. Default: only unreleased commits are listed.
    */
   careful?: boolean;
+  /** Skip fetching source/target from remote before comparing. */
+  noFetch?: boolean;
 }
 
 export interface UnreleasedCommit {
@@ -79,10 +81,60 @@ function resolveAuthorFilter(git: GitClient, options: UnreleasedOptions): string
   return resolveGitUserEmail(git);
 }
 
-function ensureRef(git: GitClient, ref: string): void {
+/** Resolve a branch name or ref to `{remote}/{branch}` for remote-first comparison. */
+function resolveRemoteRef(git: GitClient, config: Config, ref: string): string {
+  const trimmed = ref.trim();
+  if (trimmed.startsWith(`${config.remote}/`)) return trimmed;
+  if (/^[0-9a-f]{7,40}$/i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith('refs/')) return trimmed;
+
+  const slash = trimmed.indexOf('/');
+  if (slash > 0) {
+    const maybeRemote = trimmed.slice(0, slash);
+    const remotes = git
+      .run(['remote'])
+      .stdout.split('\n')
+      .map((r) => r.trim())
+      .filter(Boolean);
+    if (remotes.includes(maybeRemote)) return trimmed;
+  }
+
+  return `${config.remote}/${trimmed}`;
+}
+
+/** Branch name to pass to `git fetch <remote> <branch>`. */
+function branchNameForFetch(config: Config, resolvedRef: string): string | null {
+  const prefix = `${config.remote}/`;
+  if (!resolvedRef.startsWith(prefix)) return null;
+  const branch = resolvedRef.slice(prefix.length);
+  return branch !== '' ? branch : null;
+}
+
+function fetchRemoteRefs(
+  git: GitClient,
+  config: Config,
+  logger: Logger,
+  resolvedRefs: string[],
+): void {
+  const branches = [
+    ...new Set(
+      resolvedRefs
+        .map((ref) => branchNameForFetch(config, ref))
+        .filter((b): b is string => b != null && b !== ''),
+    ),
+  ];
+
+  if (branches.length === 0) return;
+
+  logger.info(`Fetching ${config.remote}: ${branches.join(', ')}...`);
+  git.runOrThrow(['fetch', config.remote, ...branches], { stdio: 'inherit' });
+}
+
+function ensureRef(git: GitClient, ref: string, config: Config): void {
   if (!git.run(['rev-parse', '--verify', `${ref}^{commit}`]).ok) {
     throw new GitControlsError(`Ref not found: ${ref}`, [
-      `Tip: run \`git fetch ${ref.includes('/') ? (ref.split('/')[0] ?? 'origin') : 'origin'}\` and use origin/<branch> if local is stale.`,
+      `Run: git fetch ${config.remote} <branch>`,
+      `Or re-run without --no-fetch so coolkit fetches before comparing.`,
     ]);
   }
 }
@@ -305,13 +357,21 @@ export function runUnreleasedWorkflow({
 }): UnreleasedResult {
   const git = createGitClient();
 
-  const source = options.source?.trim() ?? resolveCurrentBranch(git);
-  const target = options.target?.trim() ?? resolveDefaultTarget(config);
+  const sourceInput = options.source?.trim() ?? resolveCurrentBranch(git);
+  const targetInput = options.target?.trim() ?? resolveDefaultTarget(config);
+  const source = resolveRemoteRef(git, config, sourceInput);
+  const target = resolveRemoteRef(git, config, targetInput);
   const author = resolveAuthorFilter(git, options);
   const showNoise = options.careful === true;
 
-  ensureRef(git, source);
-  ensureRef(git, target);
+  if (options.noFetch !== true) {
+    fetchRemoteRefs(git, config, logger, [source, target]);
+  } else {
+    logger.warn('--no-fetch: using local remote-tracking refs without fetching.');
+  }
+
+  ensureRef(git, source, config);
+  ensureRef(git, target, config);
 
   const commits = listCommits(git, source, target, author);
 
@@ -322,6 +382,7 @@ export function runUnreleasedWorkflow({
   logger.plain(
     `Comparing commits on ${source} not in ${target}${authorLabel}${modeLabel}${filterLabel}`,
   );
+  logger.plain(`Refs resolved from ${config.remote} (fetched before compare unless --no-fetch).`);
   logger.plain(
     `Candidates by hash (${target}..${source}, no merges): ${commits.length.toString()}`,
   );

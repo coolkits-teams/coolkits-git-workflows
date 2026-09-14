@@ -4,9 +4,8 @@
  * Usage:
  *   coolkit unreleased
  *   coolkit unreleased --careful
- *   coolkit unreleased --source=origin/qa --target=origin/pre-uat
- *   coolkit unreleased --author=hung.ngo-van@banvien.com.vn
- *   coolkit unreleased --fast
+ *   coolkit unreleased --source=qa --target=pre-uat
+ *   coolkit unreleased --no-fetch
  */
 
 import { loadConfig } from '../src/config/load-config.js';
@@ -20,35 +19,34 @@ Usage: coolkit unreleased [options]
 
 List commits on --source that are not yet present on --target.
 
+Always compares remote refs (origin/<branch> by default).
+Before comparing, fetches both source and target from the remote so
+stale local branches cannot skew the result. Use --no-fetch to skip.
+
 Defaults (no options):
-  --source   current branch
-  --target   preUatBranch from config (or uatBranch)
+  --source   origin/<current branch>
+  --target   origin/<preUatBranch> (or uatBranch)
   --author   your git user.email
 
 By default only unreleased (safe to pick) commits are listed.
 Noisy commits (already on target, empty, ported, ambiguous) are counted
 but hidden. Use --careful to list them with do-not-pick warnings.
 
-Equivalence checks (unless --fast):
-  1) same patch-id on target → already released
-  2) reverse-apply succeeds on target tree → already released
-  3) one target commit shares title → ported (conflict resolve, do not re-pick)
-  4) multiple target commits share title → ambiguous
-
 Options:
-  --source <ref>     Branch with candidate commits. Default: current branch.
-  --target <ref>     Branch already released to. Default: preUatBranch / uatBranch.
+  --source <ref>     Candidate branch/ref. Default: current branch → origin/<branch>.
+  --target <ref>     Released-to branch/ref. Default: preUatBranch → origin/<branch>.
   --author <email>   Filter by author email (substring). Default: git user.email.
   --all-authors      Include commits from all authors (no author filter).
   --careful          Also list noisy commits with do-not-pick warnings.
   --fast             Skip equivalence checks; list by hash only.
+  --no-fetch         Skip git fetch (use existing remote-tracking refs).
   --debug            Verbose logging.
   -h, --help         Show this help.
 
 Examples:
   coolkit unreleased
   coolkit unreleased --careful
-  coolkit unreleased --source=origin/qa --target=origin/pre-uat
+  coolkit unreleased --source=qa --target=pre-uat
   coolkit unreleased --all-authors --careful
 `.trim();
 
@@ -75,6 +73,7 @@ function main(): void {
             allAuthors: hasFlag('--all-authors'),
             careful: hasFlag('--careful'),
             fast: hasFlag('--fast'),
+            noFetch: hasFlag('--no-fetch'),
           },
         });
       } catch (error) {
