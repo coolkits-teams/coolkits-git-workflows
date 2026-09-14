@@ -1,13 +1,13 @@
-import { spawnSync } from 'node:child_process';
-import { mkdtempSync, rmSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
-
 import { createGitClient } from '../core/git-client.js';
 import { GitControlsError } from '../errors.js';
 import type { Config, GitClient, Logger } from '../types.js';
+import {
+  type UnreleasedCommit,
+  classifyUnreleasedCommits,
+  listCommits,
+} from './unreleased-dependency.js';
 
-const PATCH_BUFFER = 64 * 1024 * 1024;
+export { listCommits } from './unreleased-dependency.js';
 
 export interface UnreleasedOptions {
   /** Branch/ref that may have new commits. Default: current branch. */
@@ -29,14 +29,7 @@ export interface UnreleasedOptions {
   noFetch?: boolean;
 }
 
-export interface UnreleasedCommit {
-  hash: string;
-  short: string;
-  date: string;
-  name: string;
-  email: string;
-  subject: string;
-}
+export type { UnreleasedCommit } from './unreleased-dependency.js';
 
 export interface UnreleasedResult {
   status: 'ok' | 'empty';
@@ -139,193 +132,8 @@ function ensureRef(git: GitClient, ref: string, config: Config): void {
   }
 }
 
-function listCommits(
-  git: GitClient,
-  source: string,
-  target: string,
-  author: string | null,
-): UnreleasedCommit[] {
-  const args = [
-    'log',
-    `${target}..${source}`,
-    '--no-merges',
-    '--abbrev=8',
-    '--format=%H%x00%h%x00%ad%x00%an%x00%ae%x00%s',
-    '--date=short',
-  ];
-
-  if (author != null && author.trim() !== '') {
-    args.push(`--author=${author.trim()}`);
-  }
-
-  const out = git.run(args).stdout.trim();
-  if (!out) return [];
-
-  return out
-    .split('\n')
-    .filter(Boolean)
-    .map((line) => {
-      const [hash, short, date, name, email, subject] = line.split('\0');
-      return {
-        hash: hash ?? '',
-        short: short ?? '',
-        date: date ?? '',
-        name: name ?? '',
-        email: email ?? '',
-        subject: subject ?? '',
-      };
-    });
-}
-
-function showPatchBuffer(hash: string): Buffer | null {
-  const result = spawnSync('git', ['show', hash, '--format=', '--patch'], {
-    maxBuffer: PATCH_BUFFER,
-  });
-  if (result.status !== 0 || result.stdout.length === 0) return null;
-  return result.stdout;
-}
-
-function patchIdForCommit(hash: string): string | null {
-  const patch = showPatchBuffer(hash);
-  if (!patch) return null;
-
-  const result = spawnSync('git', ['patch-id', '--stable'], {
-    encoding: 'utf8',
-    input: patch,
-    maxBuffer: PATCH_BUFFER,
-  });
-  if (result.status !== 0) return null;
-  return result.stdout.trim().split(/\s+/)[0] ?? null;
-}
-
-function buildTargetIndexes(
-  git: GitClient,
-  target: string,
-): {
-  bySubject: Map<string, string[]>;
-  recentHashes: string[];
-} {
-  const out = git.run(['log', target, '--no-merges', '--format=%H%x00%s']).stdout.trim();
-  const bySubject = new Map<string, string[]>();
-  const recentHashes: string[] = [];
-  if (!out) return { bySubject, recentHashes };
-
-  for (const line of out.split('\n')) {
-    const [hash, subject] = line.split('\0');
-    if (!hash || subject === undefined) continue;
-    recentHashes.push(hash);
-    const list = bySubject.get(subject);
-    if (list) list.push(hash);
-    else bySubject.set(subject, [hash]);
-  }
-  return { bySubject, recentHashes };
-}
-
-function classifyByPatchId(
-  commits: UnreleasedCommit[],
-  bySubject: Map<string, string[]>,
-  recentHashes: string[],
-  logger: Logger,
-): { empty: string[]; matched: Set<string>; unresolved: string[] } {
-  const empty: string[] = [];
-  const matched = new Set<string>();
-  const pendingByPatchId = new Map<string, string>();
-
-  for (const commit of commits) {
-    const patchId = patchIdForCommit(commit.hash);
-    if (!patchId) {
-      empty.push(commit.hash);
-      continue;
-    }
-
-    const sameMessage = bySubject.get(commit.subject) ?? [];
-    let found = false;
-    for (const other of sameMessage) {
-      const otherId = patchIdForCommit(other);
-      if (otherId && otherId === patchId) {
-        matched.add(commit.hash);
-        found = true;
-        break;
-      }
-    }
-    if (!found) pendingByPatchId.set(patchId, commit.hash);
-  }
-
-  if (pendingByPatchId.size === 0) {
-    return { empty, matched, unresolved: [] };
-  }
-
-  const windowSize = Math.min(1200, recentHashes.length);
-  logger.plain(
-    `Scanning ${windowSize.toString()} recent commits on target for ${pendingByPatchId.size.toString()} remaining patch(es)...`,
-  );
-
-  for (let i = 0; i < windowSize; i += 1) {
-    const hash = recentHashes[i];
-    if (!hash) continue;
-    const otherId = patchIdForCommit(hash);
-    if (!otherId) continue;
-    const commitHash = pendingByPatchId.get(otherId);
-    if (!commitHash) continue;
-    matched.add(commitHash);
-    pendingByPatchId.delete(otherId);
-    if (pendingByPatchId.size === 0) break;
-  }
-
-  return {
-    empty,
-    matched,
-    unresolved: [...pendingByPatchId.values()],
-  };
-}
-
-function createTargetWorktree(git: GitClient, target: string): string {
-  const dir = mkdtempSync(join(tmpdir(), 'git-unreleased-'));
-  git.runOrThrow(['worktree', 'add', '--detach', '--quiet', dir, target]);
-  return dir;
-}
-
-function removeTargetWorktree(git: GitClient, dir: string): void {
-  try {
-    git.run(['worktree', 'remove', '--force', dir]);
-  } catch {
-    try {
-      rmSync(dir, { recursive: true, force: true });
-      git.run(['worktree', 'prune']);
-    } catch {
-      // ignore cleanup errors
-    }
-  }
-}
-
 function shortHash(hash: string): string {
   return hash.slice(0, 8);
-}
-
-function classifyByTitle(
-  commits: UnreleasedCommit[],
-  bySubject: Map<string, string[]>,
-): {
-  ported: { commit: UnreleasedCommit; targetHash: string }[];
-  ambiguous: { commit: UnreleasedCommit; targetHashes: string[] }[];
-  missing: UnreleasedCommit[];
-} {
-  const ported: { commit: UnreleasedCommit; targetHash: string }[] = [];
-  const ambiguous: { commit: UnreleasedCommit; targetHashes: string[] }[] = [];
-  const missing: UnreleasedCommit[] = [];
-
-  for (const commit of commits) {
-    const matches = bySubject.get(commit.subject) ?? [];
-    if (matches.length === 1) {
-      ported.push({ commit, targetHash: matches[0] ?? '' });
-    } else if (matches.length > 1) {
-      ambiguous.push({ commit, targetHashes: matches });
-    } else {
-      missing.push(commit);
-    }
-  }
-
-  return { ported, ambiguous, missing };
 }
 
 function formatCommitLine(commit: UnreleasedCommit, note?: string): string {
@@ -333,18 +141,8 @@ function formatCommitLine(commit: UnreleasedCommit, note?: string): string {
   return note ? `${base}  ${note}` : base;
 }
 
-function isPatchAlreadyInTargetTree(worktreeDir: string, hash: string): boolean {
-  const patch = showPatchBuffer(hash);
-  if (!patch) return false;
-
-  const result = spawnSync('git', ['apply', '--reverse', '--check'], {
-    cwd: worktreeDir,
-    input: patch,
-    maxBuffer: PATCH_BUFFER,
-    stdio: ['pipe', 'ignore', 'ignore'],
-  });
-  return result.status === 0;
-}
+const PROMOTED_FIX_NOTE =
+  '[required after other unreleased commit(s) — pick together, do not skip]';
 
 export function runUnreleasedWorkflow({
   config,
@@ -420,51 +218,34 @@ export function runUnreleasedWorkflow({
   }
 
   logger.plain(`Building index for ${target}...`);
-  const { bySubject, recentHashes } = buildTargetIndexes(git, target);
-  const {
-    empty: emptyHashes,
-    matched: matchedHashes,
-    unresolved: unresolvedHashes,
-  } = classifyByPatchId(commits, bySubject, recentHashes, logger);
+  logger.plain(`Checking remaining commit(s) against ${target} tree...`);
 
-  const byHash = new Map(commits.map((c) => [c.hash, c]));
-  const already = [...matchedHashes]
-    .map((h) => byHash.get(h))
-    .filter(Boolean) as UnreleasedCommit[];
-  const empty = emptyHashes.map((h) => byHash.get(h)).filter(Boolean) as UnreleasedCommit[];
-  let unresolved = unresolvedHashes.map((h) => byHash.get(h)).filter(Boolean) as UnreleasedCommit[];
+  const classification = classifyUnreleasedCommits({ git, source, target, commits });
+  const { unreleased, promoted, skipped, counts } = classification;
+  const promotedHashes = new Set(promoted.map((commit) => commit.hash));
 
-  let worktreeDir: string | null = null;
-  try {
-    if (unresolved.length > 0) {
-      logger.plain(
-        `Checking ${unresolved.length.toString()} remaining commit(s) against ${target} tree...`,
-      );
-      worktreeDir = createTargetWorktree(git, target);
+  const already = skipped.filter((row) => row.reason === 'already').map((row) => row.commit);
+  const empty = skipped.filter((row) => row.reason === 'empty').map((row) => row.commit);
+  const ported = skipped
+    .filter((row) => row.reason === 'ported')
+    .map((row) => ({ commit: row.commit, targetHash: row.targetHash ?? '' }));
+  const ambiguous = skipped
+    .filter((row) => row.reason === 'ambiguous')
+    .map((row) => ({ commit: row.commit, targetHashes: row.targetHashes ?? [] }));
 
-      const stillMissing: UnreleasedCommit[] = [];
-      for (const commit of unresolved) {
-        if (isPatchAlreadyInTargetTree(worktreeDir, commit.hash)) {
-          already.push(commit);
-        } else {
-          stillMissing.push(commit);
-        }
-      }
-      unresolved = stillMissing;
-    }
-  } finally {
-    if (worktreeDir) removeTargetWorktree(git, worktreeDir);
+  if (counts.promoted > 0) {
+    logger.plain(
+      `Promoted ${counts.promoted.toString()} follow-up fix(es) from already-on-target to unreleased.`,
+    );
   }
 
-  const { ported, ambiguous, missing: unreleased } = classifyByTitle(unresolved, bySubject);
+  logger.plain(`Already on ${target} (same patch): ${counts.already.toString()}`);
+  logger.plain(`Empty commits (no diff): ${counts.empty.toString()}`);
+  logger.plain(`Ported (same title, patch differs): ${counts.ported.toString()}`);
+  logger.plain(`Ambiguous titles: ${counts.ambiguous.toString()}`);
+  logger.plain(`Unreleased: ${counts.unreleased.toString()}`);
 
-  logger.plain(`Already on ${target} (same patch): ${already.length.toString()}`);
-  logger.plain(`Empty commits (no diff): ${empty.length.toString()}`);
-  logger.plain(`Ported (same title, patch differs): ${ported.length.toString()}`);
-  logger.plain(`Ambiguous titles: ${ambiguous.length.toString()}`);
-  logger.plain(`Unreleased: ${unreleased.length.toString()}`);
-
-  const noiseCount = already.length + empty.length + ported.length + ambiguous.length;
+  const noiseCount = counts.already + counts.empty + counts.ported + counts.ambiguous;
   if (!showNoise && noiseCount > 0) {
     logger.plain('');
     logger.plain(
@@ -558,7 +339,8 @@ export function runUnreleasedWorkflow({
       logger.ok('Safe to cherry-pick:');
     }
     for (const c of unreleased) {
-      logger.plain(formatCommitLine(c));
+      const note = promotedHashes.has(c.hash) ? PROMOTED_FIX_NOTE : undefined;
+      logger.plain(formatCommitLine(c, note));
     }
   }
 

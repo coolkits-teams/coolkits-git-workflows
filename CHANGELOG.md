@@ -11,6 +11,23 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ---
 
+## [2.3.7] — 2026-09-14
+
+### Fixed
+
+- **`coolkit unreleased` follow-up fixes** — Commits classified as `already` can
+  become required after other unreleased commits are cherry-picked (e.g. a
+  localhost debug hunk bundled in a feat commit plus a follow-up fix). Only
+  those dependent fixes are promoted; other skip buckets (`empty`, `ported`,
+  `ambiguous`, and truly-noop `already`) are unchanged.
+
+### Added
+
+- **Classification tests** — Integration tests for QTKD-5924-like feat+fix
+  pairs, duplicate-patch skip, ported/ambiguous skip, and mixed already lists.
+
+---
+
 ## [2.3.6] — 2026-09-14
 
 ### Fixed
