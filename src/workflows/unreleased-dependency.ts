@@ -31,10 +31,7 @@ export function changedFilesForCommit(hash: string, repoDir: string): string[] {
     maxBuffer: PATCH_BUFFER,
   });
   if (result.status !== 0) return [];
-  return result.stdout
-    .trim()
-    .split('\n')
-    .filter(Boolean);
+  return result.stdout.trim().split('\n').filter(Boolean);
 }
 
 function showPatchBuffer(hash: string, repoDir: string, paths?: string[]): Buffer | null {
@@ -397,7 +394,7 @@ function removeTargetWorktree(git: GitClient, dir: string): void {
  */
 export function classifyUnreleasedCommits({
   git,
-  source,
+  // source,
   target,
   commits,
 }: {
@@ -448,9 +445,7 @@ export function classifyUnreleasedCommits({
     ({ ported, ambiguous, missing: unreleased } = classifyByTitle(unresolved, bySubject));
 
     if (already.length > 0 && unreleased.length > 0) {
-      if (!worktreeDir) {
-        worktreeDir = createTargetWorktree(git, target);
-      }
+      worktreeDir ??= createTargetWorktree(git, target);
 
       const { stillAlready, promoted: promotedFixes } = promoteDependentAlreadyCommits({
         already,

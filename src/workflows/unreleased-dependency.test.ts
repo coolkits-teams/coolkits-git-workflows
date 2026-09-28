@@ -117,7 +117,8 @@ describe('promoteDependentAlreadyCommits', () => {
     const featHash = commitFiles(
       repo,
       {
-        [apiPath]: "const BASE_URL = '/api';\nexport const load = () => 'http://localhost:5035/api';\n",
+        [apiPath]:
+          "const BASE_URL = '/api';\nexport const load = () => 'http://localhost:5035/api';\n",
         [featurePath]: 'export const feature = true;\n',
       },
       'feat: add feature and localhost debug',
@@ -137,7 +138,10 @@ describe('promoteDependentAlreadyCommits', () => {
       repoDir: repo,
     });
 
-    assert.deepEqual(promoted.map((commit) => commit.hash), [fixHash]);
+    assert.deepEqual(
+      promoted.map((commit) => commit.hash),
+      [fixHash],
+    );
     assert.equal(stillAlready.length, 0);
     assert.equal(
       isAlreadyCommitInvalidatedByUnreleased(fixCommit, [featCommit], worktree.dir, repo),
@@ -155,7 +159,12 @@ describe('promoteDependentAlreadyCommits', () => {
 
     git(repo, ['checkout', '-b', 'source']);
     commitFile(repo, 'src/api.ts', "export const api = 'v1';\n", 'mistake on source');
-    const unreleasedHash = commitFile(repo, 'src/feature.ts', 'export const feature = 1;\n', 'feat');
+    const unreleasedHash = commitFile(
+      repo,
+      'src/feature.ts',
+      'export const feature = 1;\n',
+      'feat',
+    );
     const noopFixHash = commitFile(
       repo,
       'src/api.ts',
@@ -189,7 +198,12 @@ describe('promoteDependentAlreadyCommits', () => {
     const correct = "export const api = 'ok';\n";
 
     git(repo, ['checkout', '-b', 'target']);
-    const utilsBaseHash = commitFile(repo, utilsPath, "export const utils = 'old';\n", 'utils base');
+    const utilsBaseHash = commitFile(
+      repo,
+      utilsPath,
+      "export const utils = 'old';\n",
+      'utils base',
+    );
     commitFile(repo, utilsPath, "export const utils = 'target';\n", 'target utils');
     commitFile(repo, apiPath, correct, 'target api');
 
@@ -222,8 +236,14 @@ describe('promoteDependentAlreadyCommits', () => {
       repoDir: repo,
     });
 
-    assert.deepEqual(promoted.map((commit) => commit.hash), [fixHash]);
-    assert.deepEqual(stillAlready.map((commit) => commit.hash), [duplicateUtilsHash]);
+    assert.deepEqual(
+      promoted.map((commit) => commit.hash),
+      [fixHash],
+    );
+    assert.deepEqual(
+      stillAlready.map((commit) => commit.hash),
+      [duplicateUtilsHash],
+    );
   });
 });
 

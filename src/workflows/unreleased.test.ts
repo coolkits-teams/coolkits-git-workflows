@@ -32,7 +32,8 @@ describe('classifyUnreleasedCommits', () => {
     const apiPath = 'src/shared/api/priceListTemplate.api.ts';
     const featurePath = 'src/features/price-list/Feature.tsx';
     const utilsPath = 'src/shared/utils/flaky.ts';
-    const correctApi = "const BASE_URL = '/v1/ps/price-table-templates';\nexport const load = () => BASE_URL;\n";
+    const correctApi =
+      "const BASE_URL = '/v1/ps/price-table-templates';\nexport const load = () => BASE_URL;\n";
 
     git(repo, ['checkout', '-b', 'pre-uat']);
     commitFile(repo, apiPath, correctApi, 'target api');
@@ -56,7 +57,12 @@ describe('classifyUnreleasedCommits', () => {
       },
       'feat(pricing): QTKD-5924 pinned-selected-item',
     );
-    const fixHash = commitFile(repo, apiPath, correctApi, 'fix(priceListTemplate): restore BASE_URL');
+    const fixHash = commitFile(
+      repo,
+      apiPath,
+      correctApi,
+      'fix(priceListTemplate): restore BASE_URL',
+    );
     const choreHash = commitFile(repo, '.gitignore', 'node_modules\n', 'chore: update gitignore');
 
     return { repo, featHash, fixHash, duplicateHash, choreHash };
@@ -94,8 +100,14 @@ describe('classifyUnreleasedCommits', () => {
       'dependent fix must not remain in skip',
     );
     assert.equal(result.counts.promoted, 1);
-    assert.equal(result.promoted.some((commit) => commit.hash === fixHash), true);
-    assert.equal(result.skipped.some((row) => row.commit.hash === duplicateHash), true);
+    assert.equal(
+      result.promoted.some((commit) => commit.hash === fixHash),
+      true,
+    );
+    assert.equal(
+      result.skipped.some((row) => row.commit.hash === duplicateHash),
+      true,
+    );
     assert.equal(result.unreleased.length, 3);
   });
 
@@ -109,7 +121,12 @@ describe('classifyUnreleasedCommits', () => {
 
     git(repo, ['checkout', '-b', 'qa']);
     const unreleasedHash = commitFile(repo, 'src/b.ts', 'export const b = 1;\n', 'feat: new file');
-    const portedHash = commitFile(repo, 'src/a.ts', 'export const a = 2;\n', 'fix: shared title on target');
+    const portedHash = commitFile(
+      repo,
+      'src/a.ts',
+      'export const a = 2;\n',
+      'fix: shared title on target',
+    );
 
     const gitClient = createGitClient({ cwd: repo });
     const commits = listCommits(gitClient, 'refs/heads/qa', 'refs/heads/pre-uat', null);
@@ -125,7 +142,10 @@ describe('classifyUnreleasedCommits', () => {
       true,
     );
     assert.equal(result.promoted.length, 0);
-    assert.deepEqual(result.unreleased.map((commit) => commit.hash), [unreleasedHash]);
+    assert.deepEqual(
+      result.unreleased.map((commit) => commit.hash),
+      [unreleasedHash],
+    );
   });
 
   it('keeps ambiguous commits in skip and never promotes them', () => {
@@ -139,7 +159,12 @@ describe('classifyUnreleasedCommits', () => {
 
     git(repo, ['checkout', '-b', 'qa']);
     const unreleasedHash = commitFile(repo, 'src/b.ts', 'export const b = 1;\n', 'feat: new file');
-    const ambiguousHash = commitFile(repo, 'src/d.ts', 'export const d = 1;\n', 'fix: duplicate title');
+    const ambiguousHash = commitFile(
+      repo,
+      'src/d.ts',
+      'export const d = 1;\n',
+      'fix: duplicate title',
+    );
 
     const gitClient = createGitClient({ cwd: repo });
     const commits = listCommits(gitClient, 'refs/heads/qa', 'refs/heads/pre-uat', null);
@@ -155,7 +180,10 @@ describe('classifyUnreleasedCommits', () => {
       true,
     );
     assert.equal(result.promoted.length, 0);
-    assert.deepEqual(result.unreleased.map((commit) => commit.hash), [unreleasedHash]);
+    assert.deepEqual(
+      result.unreleased.map((commit) => commit.hash),
+      [unreleasedHash],
+    );
   });
 
   it('does not promote when every candidate is already on target', () => {
@@ -184,6 +212,9 @@ describe('classifyUnreleasedCommits', () => {
 
     assert.equal(result.unreleased.length, 0);
     assert.equal(result.promoted.length, 0);
-    assert.equal(result.skipped.every((row) => row.reason === 'already'), true);
+    assert.equal(
+      result.skipped.every((row) => row.reason === 'already'),
+      true,
+    );
   });
 });

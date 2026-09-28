@@ -24,18 +24,19 @@ export function writeRepoFile(dir: string, relativePath: string, content: string
   writeFileSync(fullPath, content, 'utf8');
 }
 
-export function commitFile(dir: string, relativePath: string, content: string, message: string): string {
+export function commitFile(
+  dir: string,
+  relativePath: string,
+  content: string,
+  message: string,
+): string {
   writeRepoFile(dir, relativePath, content);
   git(dir, ['add', relativePath]);
   git(dir, ['commit', '-m', message]);
   return git(dir, ['rev-parse', 'HEAD']);
 }
 
-export function commitFiles(
-  dir: string,
-  files: Record<string, string>,
-  message: string,
-): string {
+export function commitFiles(dir: string, files: Record<string, string>, message: string): string {
   for (const [relativePath, content] of Object.entries(files)) {
     writeRepoFile(dir, relativePath, content);
     git(dir, ['add', relativePath]);
